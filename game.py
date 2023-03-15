@@ -35,15 +35,13 @@ import pygame
 from pygame.locals import *
 import sys
 
-
-
 pygame.init()
 BACKGROUND = (74, 74, 74)
 FPS = 147
 clock = pygame.time.Clock()
 
 #WINDOW = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-WINDOW = pygame.display.set_mode((500, 500))
+WINDOW = pygame.display.set_mode((1600, 900), pygame.RESIZABLE)
 pygame.display.set_caption("Gorilla Pong")
 
 #####
@@ -61,6 +59,9 @@ while looping:
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
+
+        if event.type == KEYDOWN:
+            pass
 
         if event.type == MOUSEBUTTONDOWN:
             screens[active_screen].process_click(event.pos)
