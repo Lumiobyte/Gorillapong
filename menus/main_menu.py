@@ -11,7 +11,11 @@ class MainMenu():
         self.screen = window
         self.font = pygame.font.SysFont(None, 48)
 
-        self.buttons = [button.Button(self.screen, (255, 255, 255), 10, 10, 50, 25)]
+        self.buttons = [
+            button.Button(self.screen, Colours.WHITE, self.__calc_position(0, -70), 240, 100, "Play"),
+            button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 70), 240, 100, "Settings"),
+            button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 210), 240, 100, "Exit"),
+        ]
 
     def process_click(self, pos): # Execute actions for clicks directed to this menu
         for btn in self.buttons:
@@ -22,10 +26,10 @@ class MainMenu():
     def render(self): # Return render for this menu
 
         text = self.font.render("Gorillapong", True, Colours.WHITE)
-        self.screen.blit(text, text.get_rect(center = self.__calc_center(2, 8)))
+        self.screen.blit(text, text.get_rect(center = self.__calc_position(0, -350)))
 
         for btn in self.buttons:
             btn.render()
 
-    def __calc_center(self, w, h):
-        return (self.screen.get_width() / w, self.screen.get_height() / h)
+    def __calc_position(self, w, h):
+        return ((self.screen.get_width() / 2) + w, (self.screen.get_height() / 2) + h)
