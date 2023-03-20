@@ -7,25 +7,33 @@ from utils.colours import Colours
 
 class MainMenu():
 
-    def __init__(self, window):
+    def __init__(self, window, title):
         self.screen = window
+        self.screen_title = title
         self.font = pygame.font.SysFont(None, 48)
 
-        self.buttons = [
-            button.Button(self.screen, Colours.WHITE, self.__calc_position(0, -70), 240, 100, "Play"),
-            button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 70), 240, 100, "Settings"),
-            button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 210), 240, 100, "Exit"),
-        ]
+        if self.screen_title == "Settings":
+            self.buttons = [
+                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, -70), 240, 100, "Idk some setting", 1),
+                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 70), 240, 100, "another one", 1),
+                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 210), 240, 100, "Back", 0),
+            ]
+        else:
+            self.buttons = [
+                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, -70), 240, 100, "Play", 3),
+                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 70), 240, 100, "Settings", 1),
+                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 210), 240, 100, "Exit", -1),
+            ]
 
     def process_click(self, pos): # Execute actions for clicks directed to this menu
         for btn in self.buttons:
-            if btn.check_collision(pos):
-                print("collide")
-                break
+            collided, action = btn.check_collision(pos)
+            if collided:
+                return action
 
     def render(self): # Return render for this menu
 
-        text = self.font.render("Gorillapong", True, Colours.WHITE)
+        text = self.font.render(self.screen_title, True, Colours.WHITE)
         self.screen.blit(text, text.get_rect(center = self.__calc_position(0, -350)))
 
         for btn in self.buttons:

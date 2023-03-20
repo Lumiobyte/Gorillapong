@@ -34,6 +34,9 @@
 import pygame
 from pygame.locals import *
 import sys
+from dataclasses import dataclass
+
+from utils.colours import Colours
 
 pygame.init()
 BACKGROUND = (74, 74, 74)
@@ -48,27 +51,83 @@ pygame.display.set_caption("Gorilla Pong")
 screens = []
 
 import menus.main_menu as main_menu
-screens.append(main_menu.MainMenu(WINDOW))
+screens.append(main_menu.MainMenu(WINDOW, "Gorillapong"))
+screens.append(main_menu.MainMenu(WINDOW, "Settings"))
 
 active_screen = 0
+
+#####
+from objects import paddle
+
+@dataclass
+class Player:
+    paddle_horizontal: paddle.Paddle
+    paddle_vertical: paddle.Paddle
+
+player1 = Player(paddle.Paddle(WINDOW, 0, [300, 840]), paddle.Paddle(WINDOW, 1, [40, 300]))
+player2 = Player(paddle.Paddle(WINDOW, 0, [1300, 840]), paddle.Paddle(WINDOW, 1, [1540, 300]))
+
 #####
 
 looping = True
 while looping:
-    for event in pygame.event.get():
-        if event.type == QUIT:
+    if active_screen != 3:
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                pass
+
+            if event.type == MOUSEBUTTONDOWN:
+                result = screens[active_screen].process_click(event.pos)
+                print(result)
+                if result != None:
+                    active_screen = result
+
+        if event.type == QUIT or active_screen == -1:
             pygame.quit()
             sys.exit()
+        else:
+            if active_screen != 3:
+                WINDOW.fill(BACKGROUND)
+                screens[active_screen].render()
+    else:
+        ##################################################
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                pass
 
-        if event.type == KEYDOWN:
-            pass
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
 
-        if event.type == MOUSEBUTTONDOWN:
-            screens[active_screen].process_click(event.pos)
+        keys = pygame.key.get_pressed()
+        if keys[K_w]:
+            player1.paddle_vertical.move_positive()
+        if keys[K_s]:
+            player1.paddle_vertical.move_negative()
+        if keys[K_a]:
+            player1.paddle_horizontal.move_negative()
+        if keys[K_d]:
+            player1.paddle_horizontal.move_positive()
+        
+        if keys[K_UP]:
+            player2.paddle_vertical.move_positive()
+        if keys[K_DOWN]:
+            player2.paddle_vertical.move_negative()
+        if keys[K_RIGHT]:
+            player2.paddle_horizontal.move_positive()
+        if keys[K_LEFT]:
+            player2.paddle_horizontal.move_negative()
 
-    WINDOW.fill(BACKGROUND)
+        WINDOW.fill(BACKGROUND)
 
-    screens[active_screen].render()
-    
+        player1.paddle_vertical.render(Colours.GREEN)
+        player1.paddle_horizontal.render(Colours.GREEN)
+
+        player2.paddle_vertical.render(Colours.RED)
+        player2.paddle_horizontal.render(Colours.RED)
+
+        # will need to do some things with last frame time, passing it into the movement funcs, so movement is smooth
+        
+
     pygame.display.update()
     clock.tick(FPS)
