@@ -69,7 +69,7 @@ class Player:
 player1 = Player(paddle.Paddle(WINDOW, 0, (300, 860), Colours.GREEN), paddle.Paddle(WINDOW, 1, (40, 300), Colours.GREEN))
 player2 = Player(paddle.Paddle(WINDOW, 0, (1300, 40), Colours.RED), paddle.Paddle(WINDOW, 1, (1560, 300), Colours.RED))
 
-active_balls = [balls.Ball(WINDOW, 15, 1, Colours.BLUE)]
+active_balls = [balls.Ball(WINDOW, 15, 2, Colours.BLUE)]
 #####
 
 import math
@@ -79,7 +79,7 @@ def collision(rleft, rtop, width, height,   # rectangle definition
     """ Detect collision between a rectangle and circle. """
 
     # complete boundbox of the rectangle
-    rright, rbottom = rleft + width/2, rtop + height/2
+    rright, rbottom = rleft + width, rtop + height
 
     # bounding box of the circle
     cleft, ctop     = center_x-radius, center_y-radius
@@ -161,16 +161,16 @@ while looping:
             paddle_collisions = [False, False, False, False]
 
             if ball.position.x < (200 + ball.radius):
-                paddle_collisions[0] = collision(*player1.paddle_vertical.paddle_pos.tuple(), *player1.paddle_vertical.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
+                paddle_collisions[0] = collision(*player1.paddle_vertical.get_left_top(), *player1.paddle_vertical.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
                 
             if ball.position.x > (1400 - ball.radius):
-                paddle_collisions[2] = collision(*player2.paddle_vertical.paddle_pos.tuple(), *player2.paddle_vertical.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
+                paddle_collisions[2] = collision(*player2.paddle_vertical.get_left_top(), *player2.paddle_vertical.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
 
             if ball.position.y < (200 + ball.radius):
-                paddle_collisions[1] = collision(*player2.paddle_horizontal.paddle_pos.tuple(), *player2.paddle_horizontal.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
+                paddle_collisions[1] = collision(*player2.paddle_horizontal.get_left_top(), *player2.paddle_horizontal.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
 
-            if ball.position.y < (600 - ball.radius):
-                paddle_collisions[3] = collision(*player1.paddle_horizontal.paddle_pos.tuple(), *player1.paddle_horizontal.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
+            if ball.position.y > (600 - ball.radius):
+                paddle_collisions[3] = collision(*player1.paddle_horizontal.get_left_top(), *player1.paddle_horizontal.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
 
             if paddle_collisions[0]:
                 ball.reverse_velocity_x()

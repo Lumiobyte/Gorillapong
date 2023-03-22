@@ -7,7 +7,7 @@ class Ball:
     def __init__(self, screen, radius, speed, colour):
         self.screen = screen
 
-        self.position = Position(500, 500)
+        self.position = Position(500, 0)
         self.radius = radius
         self.velocity = Position(-1, 1)
         self.speed = speed

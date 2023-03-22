@@ -32,5 +32,12 @@ class Paddle():
     def render(self):
         rect = pygame.draw.rect(self.screen, self.colour, pygame.Rect(*self.get_left_top(), self.paddle_rect.x, self.paddle_rect.y))
 
+        # draw bounding points, same as how collisions function calculates them
+        """
+        pygame.draw.line(self.screen, (255, 255, 255), self.get_left_top(), self.get_left_top())
+        rright, rbottom = self.get_left_top()[0] + self.paddle_rect.x, self.get_left_top()[1] + self.paddle_rect.y
+        pygame.draw.line(self.screen, (255, 255, 255), (rright, rbottom), (rright, rbottom))
+        """
+        
     def get_left_top(self):
         return (self.paddle_pos.x - self.paddle_rect.x / 2, self.paddle_pos.y - self.paddle_rect.y / 2,)
