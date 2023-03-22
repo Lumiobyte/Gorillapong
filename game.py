@@ -39,7 +39,7 @@ from dataclasses import dataclass
 from utils.colours import Colours
 
 pygame.init()
-BACKGROUND = (74, 74, 74)
+BACKGROUND = (28, 28, 28)
 FPS = 147
 clock = pygame.time.Clock()
 
@@ -55,19 +55,53 @@ screens.append(main_menu.MainMenu(WINDOW, "Gorillapong"))
 screens.append(main_menu.MainMenu(WINDOW, "Settings"))
 
 active_screen = 0
+render_queue = []
+font = pygame.font.SysFont(None, 48)
 
 #####
-from objects import paddle
+from objects import paddle, balls
 
 @dataclass
 class Player:
     paddle_horizontal: paddle.Paddle
     paddle_vertical: paddle.Paddle
 
-player1 = Player(paddle.Paddle(WINDOW, 0, [300, 840]), paddle.Paddle(WINDOW, 1, [40, 300]))
-player2 = Player(paddle.Paddle(WINDOW, 0, [1300, 840]), paddle.Paddle(WINDOW, 1, [1540, 300]))
+player1 = Player(paddle.Paddle(WINDOW, 0, (300, 860), Colours.GREEN), paddle.Paddle(WINDOW, 1, (40, 300), Colours.GREEN))
+player2 = Player(paddle.Paddle(WINDOW, 0, (1300, 40), Colours.RED), paddle.Paddle(WINDOW, 1, (1560, 300), Colours.RED))
 
+active_balls = [balls.Ball(WINDOW, 15, 1, Colours.BLUE)]
 #####
+
+import math
+
+def collision(rleft, rtop, width, height,   # rectangle definition
+              center_x, center_y, radius):  # circle definition
+    """ Detect collision between a rectangle and circle. """
+
+    # complete boundbox of the rectangle
+    rright, rbottom = rleft + width/2, rtop + height/2
+
+    # bounding box of the circle
+    cleft, ctop     = center_x-radius, center_y-radius
+    cright, cbottom = center_x+radius, center_y+radius
+
+    # trivial reject if bounding boxes do not intersect
+    if rright < cleft or rleft > cright or rbottom < ctop or rtop > cbottom:
+        return False  # no collision possible
+
+    # check whether any point of rectangle is inside circle's radius
+    for x in (rleft, rleft+width):
+        for y in (rtop, rtop+height):
+            # compare distance between circle's center point and each point of
+            # the rectangle with the circle's radius
+            if math.hypot(x-center_x, y-center_y) <= radius:
+                return True  # collision detected
+
+    # check if center of circle is inside rectangle
+    if rleft <= center_x <= rright and rtop <= center_y <= rbottom:
+        return True  # overlaid
+
+    return False  # no collision detected
 
 looping = True
 while looping:
@@ -118,13 +152,43 @@ while looping:
         if keys[K_LEFT]:
             player2.paddle_horizontal.move_negative()
 
+        render_queue += [player1.paddle_vertical, player1.paddle_horizontal, player2.paddle_vertical, player2.paddle_horizontal]
+
+        for ball in active_balls:
+            ball.tick()
+            render_queue.append(ball)
+
+            paddle_collisions = [False, False, False, False]
+
+            if ball.position.x < (200 + ball.radius):
+                paddle_collisions[0] = collision(*player1.paddle_vertical.paddle_pos.tuple(), *player1.paddle_vertical.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
+                
+            if ball.position.x > (1400 - ball.radius):
+                paddle_collisions[2] = collision(*player2.paddle_vertical.paddle_pos.tuple(), *player2.paddle_vertical.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
+
+            if ball.position.y < (200 + ball.radius):
+                paddle_collisions[1] = collision(*player2.paddle_horizontal.paddle_pos.tuple(), *player2.paddle_horizontal.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
+
+            if ball.position.y < (600 - ball.radius):
+                paddle_collisions[3] = collision(*player1.paddle_horizontal.paddle_pos.tuple(), *player1.paddle_horizontal.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
+
+            if paddle_collisions[0]:
+                ball.reverse_velocity_x()
+            elif paddle_collisions[1]:
+                ball.reverse_velocity_y()
+            elif paddle_collisions[2]:
+                ball.reverse_velocity_x()
+            elif paddle_collisions[3]:
+                ball.reverse_velocity_y()
+
+
         WINDOW.fill(BACKGROUND)
+        for item in render_queue:
+            item.render()
 
-        player1.paddle_vertical.render(Colours.GREEN)
-        player1.paddle_horizontal.render(Colours.GREEN)
+        render_queue = []
 
-        player2.paddle_vertical.render(Colours.RED)
-        player2.paddle_horizontal.render(Colours.RED)
+        WINDOW.blit(font.render("FPS: {}".format(round(clock.get_fps(), 1)), True, Colours.BLACK), (10, 865))
 
         # will need to do some things with last frame time, passing it into the movement funcs, so movement is smooth
         

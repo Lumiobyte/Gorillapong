@@ -9,4 +9,4 @@ class Colours():
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
 
-    BG_GREY = (74, 74, 74)
+    BG_GREY = (28, 28, 28)
