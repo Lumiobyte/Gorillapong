@@ -70,10 +70,10 @@ class Player:
     paddle_vertical: paddle.Paddle
     score: int
 
-player1 = Player(paddle.Paddle(WINDOW, 0, (300, 860), Colours.GREEN), paddle.Paddle(WINDOW, 1, (40, 300), Colours.GREEN), 0)
-player2 = Player(paddle.Paddle(WINDOW, 0, (1300, 40), Colours.RED), paddle.Paddle(WINDOW, 1, (1560, 300), Colours.RED), 0)
+player1 = Player(paddle.Paddle(WINDOW, 0, (300, 860), Colours.PLAYER_GREEN), paddle.Paddle(WINDOW, 1, (40, 300), Colours.PLAYER_GREEN), 0)
+player2 = Player(paddle.Paddle(WINDOW, 0, (1300, 40), Colours.PLAYER_RED), paddle.Paddle(WINDOW, 1, (1560, 300), Colours.PLAYER_RED), 0)
 
-active_balls = [balls.Ball(WINDOW, 15, 2, 0.5, Colours.BLUE)]
+active_balls = [balls.Ball(WINDOW, 15, 2, 0.5, Colours.BALL)]
 #####
 
 import math
@@ -132,7 +132,7 @@ while looping:
         for event in pygame.event.get():
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    active_balls = [balls.Ball(WINDOW, 15, 2, 0.5, Colours.BLUE)]
+                    active_balls = [balls.Ball(WINDOW, 15, 2, 0.5, Colours.BALL)]
                     rand = random.randint(0, 3)
                     if rand == 1:
                         active_balls[0].reverse_velocity_x()
