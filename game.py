@@ -35,8 +35,10 @@ import pygame
 from pygame.locals import *
 import sys
 from dataclasses import dataclass
+import random
 
 from utils.colours import Colours
+from utils import renderutils
 
 pygame.init()
 BACKGROUND = (28, 28, 28)
@@ -65,11 +67,12 @@ from objects import paddle, balls
 class Player:
     paddle_horizontal: paddle.Paddle
     paddle_vertical: paddle.Paddle
+    score: int
 
-player1 = Player(paddle.Paddle(WINDOW, 0, (300, 860), Colours.GREEN), paddle.Paddle(WINDOW, 1, (40, 300), Colours.GREEN))
-player2 = Player(paddle.Paddle(WINDOW, 0, (1300, 40), Colours.RED), paddle.Paddle(WINDOW, 1, (1560, 300), Colours.RED))
+player1 = Player(paddle.Paddle(WINDOW, 0, (300, 860), Colours.GREEN), paddle.Paddle(WINDOW, 1, (40, 300), Colours.GREEN), 0)
+player2 = Player(paddle.Paddle(WINDOW, 0, (1300, 40), Colours.RED), paddle.Paddle(WINDOW, 1, (1560, 300), Colours.RED), 0)
 
-active_balls = [balls.Ball(WINDOW, 15, 2, Colours.BLUE)]
+active_balls = [balls.Ball(WINDOW, 15, 2, 0.5, Colours.BLUE)]
 #####
 
 import math
@@ -127,7 +130,16 @@ while looping:
         ##################################################
         for event in pygame.event.get():
             if event.type == KEYDOWN:
-                pass
+                if event.key == K_ESCAPE:
+                    active_balls = [balls.Ball(WINDOW, 15, 2, 0.5, Colours.BLUE)]
+                    rand = random.randint(0, 3)
+                    if rand == 1:
+                        active_balls[0].reverse_velocity_x()
+                    elif rand == 2:
+                        active_balls[0].reverse_velocity_y()
+                    elif rand == 3:
+                        active_balls[0].reverse_velocity_x()
+                        active_balls[0].reverse_velocity_y()    
 
             if event.type == QUIT:
                 pygame.quit()
@@ -183,10 +195,17 @@ while looping:
 
 
         WINDOW.fill(BACKGROUND)
+
+        renderutils.draw_dashed_line(WINDOW, Colours.LIGHT_GREY, (0, 0), (1600, 900), 5, 20)
+        WINDOW.blit(font.render(str(player1.score), True, Colours.GREY), (30, 100))
+        WINDOW.blit(font.render(str(player2.score), True, Colours.GREY), (1540, 800))
+
         for item in render_queue:
             item.render()
 
         render_queue = []
+
+
 
         WINDOW.blit(font.render("FPS: {}".format(round(clock.get_fps(), 1)), True, Colours.BLACK), (10, 865))
 

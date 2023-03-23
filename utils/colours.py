@@ -7,6 +7,8 @@ class Colours():
     PURPLE = (137, 52, 235)
 
     WHITE = (255, 255, 255)
+    LIGHT_GREY = (140, 140, 140)
+    GREY = (85, 85, 85)
     BLACK = (0, 0, 0)
 
     BG_GREY = (28, 28, 28)
