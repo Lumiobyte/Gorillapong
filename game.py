@@ -74,6 +74,7 @@ player1 = Player(paddle.Paddle(WINDOW, 0, (300, 860), Colours.PLAYER_GREEN), pad
 player2 = Player(paddle.Paddle(WINDOW, 0, (1300, 40), Colours.PLAYER_RED), paddle.Paddle(WINDOW, 1, (1560, 300), Colours.PLAYER_RED), 0)
 
 active_balls = [balls.Ball(WINDOW, 15, 2, 0.5, Colours.BALL)]
+player_last_hit = None
 #####
 
 import math
@@ -107,6 +108,18 @@ def collision(rleft, rtop, width, height,   # rectangle definition
 
     return False  # no collision detected
 
+def reset_ball():
+    global active_balls # absolute python 2023 
+    active_balls = [balls.Ball(WINDOW, 15, 2, 0.1, Colours.BALL)]
+    rand = random.randint(0, 3)
+    if rand == 1:
+        active_balls[0].reverse_velocity_x()
+    elif rand == 2:
+        active_balls[0].reverse_velocity_y()
+    elif rand == 3:
+        active_balls[0].reverse_velocity_x()
+        active_balls[0].reverse_velocity_y()
+
 looping = True
 while looping:
     if active_screen != 3:
@@ -132,19 +145,13 @@ while looping:
         for event in pygame.event.get():
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    active_balls = [balls.Ball(WINDOW, 15, 2, 0.5, Colours.BALL)]
-                    rand = random.randint(0, 3)
-                    if rand == 1:
-                        active_balls[0].reverse_velocity_x()
-                    elif rand == 2:
-                        active_balls[0].reverse_velocity_y()
-                    elif rand == 3:
-                        active_balls[0].reverse_velocity_x()
-                        active_balls[0].reverse_velocity_y()    
+                    reset_ball()
 
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
+
+        #### Input
 
         keys = pygame.key.get_pressed()
         if keys[K_w]:
@@ -167,33 +174,48 @@ while looping:
 
         render_queue += [player1.paddle_vertical, player1.paddle_horizontal, player2.paddle_vertical, player2.paddle_horizontal]
 
+        #### Ball logic 
+        
+        out_of_bounds = False # Need to make it per ball, so just one can be popped when it goes out of bounds and not all reset 
         for ball in active_balls:
             ball.tick()
+
+            if ball.position.x < -100 or ball.position.x > 1700 or ball.position.y < -100 or ball.position.y > 1000:
+                out_of_bounds = True
+
             render_queue.append(ball)
 
             paddle_collisions = [False, False, False, False]
 
             if ball.position.x < (200 + ball.radius):
                 paddle_collisions[0] = collision(*player1.paddle_vertical.get_left_top(), *player1.paddle_vertical.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
-                
             if ball.position.x > (1400 - ball.radius):
-                paddle_collisions[2] = collision(*player2.paddle_vertical.get_left_top(), *player2.paddle_vertical.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
-
+                paddle_collisions[2] = collision(*player2.paddle_vertical.get_left_top(), *player2.paddle_vertical.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)       
             if ball.position.y < (200 + ball.radius):
                 paddle_collisions[1] = collision(*player2.paddle_horizontal.get_left_top(), *player2.paddle_horizontal.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
-
             if ball.position.y > (600 - ball.radius):
                 paddle_collisions[3] = collision(*player1.paddle_horizontal.get_left_top(), *player1.paddle_horizontal.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
 
             if paddle_collisions[0]:
-                ball.reverse_velocity_x()
+                ball.reverse_velocity_x(player1.paddle_vertical.paddle_pos)
+                player_last_hit = player1
             elif paddle_collisions[1]:
-                ball.reverse_velocity_y()
+                ball.reverse_velocity_y(player2.paddle_vertical.paddle_pos)
+                player_last_hit = player2
             elif paddle_collisions[2]:
-                ball.reverse_velocity_x()
+                ball.reverse_velocity_x(player2.paddle_horizontal.paddle_pos)
+                player_last_hit = player2
             elif paddle_collisions[3]:
-                ball.reverse_velocity_y()
+                ball.reverse_velocity_y(player1.paddle_horizontal.paddle_pos)
+                player_last_hit = player1
 
+        if out_of_bounds:
+            reset_ball()
+            if(player_last_hit):
+                player_last_hit.score += 1
+                player_last_hit = None
+
+        #### Graphics code 
 
         WINDOW.fill(BACKGROUND)
 
@@ -211,7 +233,6 @@ while looping:
             item.render()
 
         render_queue = []
-
 
 
         WINDOW.blit(font.render("FPS: {}".format(round(clock.get_fps(), 1)), True, Colours.GREY), (5, 875))
