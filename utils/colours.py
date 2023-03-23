@@ -8,7 +8,8 @@ class Colours():
 
     WHITE = (255, 255, 255)
     LIGHT_GREY = (140, 140, 140)
-    GREY = (85, 85, 85)
+    GREY = (75, 75, 75)
+    SCORE_GREY = (45, 45, 45)
     BLACK = (0, 0, 0)
 
     BG_GREY = (28, 28, 28)

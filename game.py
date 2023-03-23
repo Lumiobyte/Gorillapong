@@ -58,7 +58,8 @@ screens.append(main_menu.MainMenu(WINDOW, "Settings"))
 
 active_screen = 0
 render_queue = []
-font = pygame.font.SysFont(None, 48)
+font = pygame.font.SysFont(None, 32)
+score_font = pygame.font.SysFont(None, 128)
 
 #####
 from objects import paddle, balls
@@ -197,8 +198,14 @@ while looping:
         WINDOW.fill(BACKGROUND)
 
         renderutils.draw_dashed_line(WINDOW, Colours.LIGHT_GREY, (0, 0), (1600, 900), 5, 20)
-        WINDOW.blit(font.render(str(player1.score), True, Colours.GREY), (30, 100))
-        WINDOW.blit(font.render(str(player2.score), True, Colours.GREY), (1540, 800))
+
+        score_text_1 = pygame.transform.rotate(score_font.render(str(player1.score), True, Colours.SCORE_GREY), -29)
+        score_text_2 = pygame.transform.rotate(score_font.render(str(player2.score), True, Colours.SCORE_GREY), -32)
+        score_text_2_rect = score_text_2.get_rect()
+        score_text_2_rect.bottomright = (1585, 865)
+
+        WINDOW.blit(score_text_1, (15, 40))
+        WINDOW.blit(score_text_2, score_text_2_rect)
 
         for item in render_queue:
             item.render()
@@ -207,7 +214,7 @@ while looping:
 
 
 
-        WINDOW.blit(font.render("FPS: {}".format(round(clock.get_fps(), 1)), True, Colours.BLACK), (10, 865))
+        WINDOW.blit(font.render("FPS: {}".format(round(clock.get_fps(), 1)), True, Colours.GREY), (5, 875))
 
         # will need to do some things with last frame time, passing it into the movement funcs, so movement is smooth
         
