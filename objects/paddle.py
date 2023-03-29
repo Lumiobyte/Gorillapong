@@ -23,11 +23,28 @@ class Paddle():
         else:
             self.paddle_pos.y -= 10
 
+        self.limit_pos()
+
     def move_negative(self):
         if self.orientation == 0:
             self.paddle_pos.x -= 10
         else:
             self.paddle_pos.y += 10
+
+        self.limit_pos()
+
+
+    def limit_pos(self):
+        if self.orientation == 0:
+            if self.paddle_pos.x > 1500:
+                self.paddle_pos.x = 1500
+            if self.paddle_pos.x < 100:
+                self.paddle_pos.x = 100
+        else:
+            if self.paddle_pos.y > 800:
+                self.paddle_pos.y = 800
+            if self.paddle_pos.y < 100:
+                self.paddle_pos.y = 100
 
     def render(self):
         rect = pygame.draw.rect(self.screen, self.colour, pygame.Rect(*self.get_left_top(), self.paddle_rect.x, self.paddle_rect.y))

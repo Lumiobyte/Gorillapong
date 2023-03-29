@@ -73,7 +73,7 @@ class Player:
 player1 = Player(paddle.Paddle(WINDOW, 0, (300, 860), Colours.PLAYER_GREEN), paddle.Paddle(WINDOW, 1, (40, 300), Colours.PLAYER_GREEN), 0)
 player2 = Player(paddle.Paddle(WINDOW, 0, (1300, 40), Colours.PLAYER_RED), paddle.Paddle(WINDOW, 1, (1560, 300), Colours.PLAYER_RED), 0)
 
-active_balls = [balls.Ball(WINDOW, 15, 2, 0.5, Colours.BALL)]
+active_balls = [balls.Ball(WINDOW, 15, 3, 0.5, Colours.BALL)]
 player_last_hit = None
 #####
 
@@ -110,7 +110,7 @@ def collision(rleft, rtop, width, height,   # rectangle definition
 
 def reset_ball():
     global active_balls # absolute python 2023 
-    active_balls = [balls.Ball(WINDOW, 15, 2, 0.1, Colours.BALL)]
+    active_balls = [balls.Ball(WINDOW, 15, 3, 0.1, Colours.BALL)]
     rand = random.randint(0, 3)
     if rand == 1:
         active_balls[0].reverse_velocity_x()
@@ -200,10 +200,10 @@ while looping:
                 ball.reverse_velocity_x(player1.paddle_vertical.paddle_pos)
                 player_last_hit = player1
             elif paddle_collisions[1]:
-                ball.reverse_velocity_y(player2.paddle_vertical.paddle_pos)
+                ball.reverse_velocity_y(player2.paddle_horizontal.paddle_pos)
                 player_last_hit = player2
             elif paddle_collisions[2]:
-                ball.reverse_velocity_x(player2.paddle_horizontal.paddle_pos)
+                ball.reverse_velocity_x(player2.paddle_vertical.paddle_pos)
                 player_last_hit = player2
             elif paddle_collisions[3]:
                 ball.reverse_velocity_y(player1.paddle_horizontal.paddle_pos)
@@ -236,6 +236,7 @@ while looping:
 
 
         WINDOW.blit(font.render("FPS: {}".format(round(clock.get_fps(), 1)), True, Colours.GREY), (5, 875))
+        WINDOW.blit(font.render(str(active_balls[0].velocity), True, Colours.GREY), (150, 875))
 
         # will need to do some things with last frame time, passing it into the movement funcs, so movement is smooth
         
