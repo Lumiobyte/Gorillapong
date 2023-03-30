@@ -73,8 +73,14 @@ class Player:
 player1 = Player(paddle.Paddle(WINDOW, 0, (300, 860), Colours.PLAYER_GREEN), paddle.Paddle(WINDOW, 1, (40, 300), Colours.PLAYER_GREEN), 0)
 player2 = Player(paddle.Paddle(WINDOW, 0, (1300, 40), Colours.PLAYER_RED), paddle.Paddle(WINDOW, 1, (1560, 300), Colours.PLAYER_RED), 0)
 
-active_balls = [balls.Ball(WINDOW, 15, 3, 0.5, Colours.BALL)]
+active_balls = [balls.Ball(WINDOW, 15, 5, 0.5, Colours.BALL)]
 player_last_hit = None
+#####
+from objects import powerups
+
+spawned_powerups = []
+spawned_powerups.append(powerups.Pineapple(WINDOW))
+
 #####
 
 import math
@@ -110,7 +116,7 @@ def collision(rleft, rtop, width, height,   # rectangle definition
 
 def reset_ball():
     global active_balls # absolute python 2023 
-    active_balls = [balls.Ball(WINDOW, 15, 3, 0.1, Colours.BALL)]
+    active_balls = [balls.Ball(WINDOW, 15, 5, 0.1, Colours.BALL)]
     rand = random.randint(0, 3)
     if rand == 1:
         active_balls[0].reverse_velocity_x()
@@ -177,11 +183,17 @@ while looping:
         #### Ball logic 
         
         out_of_bounds = False # Need to make it per ball, so just one can be popped when it goes out of bounds and not all reset 
+        scoring_player = None
         for ball in active_balls:
             ball.tick()
 
-            if ball.position.x < -100 or ball.position.x > 1700 or ball.position.y < -100 or ball.position.y > 1000:
+            if ball.position.x < -100 or ball.position.y > 1000:
                 out_of_bounds = True
+                scoring_player = player2
+            elif ball.position.x > 1700 or ball.position.y < -100:
+                out_of_bounds = True
+                scoring_player = player1
+
 
             render_queue.append(ball)
 
@@ -212,8 +224,11 @@ while looping:
         if out_of_bounds:
             reset_ball()
             if(player_last_hit):
-                player_last_hit.score += 1
+                scoring_player.score += 1
                 player_last_hit = None
+        else:
+            for powerup in spawned_powerups:
+                render_queue.append(powerup)
 
         #### Graphics code 
 
@@ -238,7 +253,7 @@ while looping:
         WINDOW.blit(font.render("FPS: {}".format(round(clock.get_fps(), 1)), True, Colours.GREY), (5, 875))
         WINDOW.blit(font.render(str(active_balls[0].velocity), True, Colours.GREY), (150, 875))
 
-        # will need to do some things with last frame time, passing it into the movement funcs, so movement is smooth
+        # will need to do some things with last frame time, passing it into the movement funcs, so movement is smooth 
         
 
     pygame.display.update()

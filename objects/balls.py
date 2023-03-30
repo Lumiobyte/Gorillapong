@@ -12,7 +12,8 @@ class Ball:
         self.position = Position(800, 450)
         self.radius = radius
         self.velocity = Position(-1, 1)
-        self.speed = speed
+        self.speed = speed / 2
+        self.bounced = False
         self.bounce_modifier = bounce_modifier
         self.colour = colour
 
@@ -30,6 +31,10 @@ class Ball:
             center_diff = (paddle_pos.y - self.position.y)
             self.velocity.y = (-center_diff / 100) * 1
 
+            if self.bounced == False:
+                self.bounced = True
+                self.speed = self.speed * 2
+
             if self.debug:
                 impact_y = abs(paddle_pos.y - center_diff)
                 self.debug_dot = (paddle_pos.x, impact_y)
@@ -40,6 +45,10 @@ class Ball:
         if paddle_pos:
             center_diff = paddle_pos.x - self.position.x
             self.velocity.x = (-center_diff / 100) * 1
+
+            if self.bounced == False:
+                self.bounced = True
+                self.speed = self.speed * 2
 
             if self.debug:
                 impact_x = abs(paddle_pos.x - center_diff)
