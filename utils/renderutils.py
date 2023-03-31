@@ -13,4 +13,4 @@ def draw_dashed_line(surf, color, start_pos, end_pos, width=1, dash_length=10):
     for index in range(0, int(length/dash_length), 2):
         start = origin + (slope *    index    * dash_length) # whore 
         end   = origin + (slope * (index + 1) * dash_length)
-        pygame.draw.line(surf, color, start.tuple(), end.tuple(), width)
+        pygame.draw.aaline(surf, color, start.tuple(), end.tuple(), width) # change it to non-aa line to have wdith back

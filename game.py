@@ -221,14 +221,19 @@ while looping:
                 ball.reverse_velocity_y(player1.paddle_horizontal.paddle_pos)
                 player_last_hit = player1
 
+            delete_queue = []
+            for powerup in spawned_powerups:
+                if collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *ball.position.tuple(), ball.radius):
+                    delete_queue.append(powerup)
+                
+            for obj in delete_queue:
+                spawned_powerups.remove(obj)
+
         if out_of_bounds:
             reset_ball()
             if(player_last_hit):
                 scoring_player.score += 1
                 player_last_hit = None
-        else:
-            for powerup in spawned_powerups:
-                render_queue.append(powerup)
 
         #### Graphics code 
 
@@ -244,14 +249,14 @@ while looping:
         WINDOW.blit(score_text_1, (15, 40))
         WINDOW.blit(score_text_2, score_text_2_rect)
 
+        render_queue += spawned_powerups
         for item in render_queue:
             item.render()
 
         render_queue = []
 
-
         WINDOW.blit(font.render("FPS: {}".format(round(clock.get_fps(), 1)), True, Colours.GREY), (5, 875))
-        WINDOW.blit(font.render(str(active_balls[0].velocity), True, Colours.GREY), (150, 875))
+        WINDOW.blit(font.render(str(active_balls[0].velocity.tuple()), True, Colours.GREY), (150, 875))
 
         # will need to do some things with last frame time, passing it into the movement funcs, so movement is smooth 
         
