@@ -75,6 +75,8 @@ player2 = Player(paddle.Paddle(WINDOW, 0, (1300, 40), Colours.PLAYER_RED), paddl
 
 active_balls = [balls.Ball(WINDOW, 15, 5, 0.5, Colours.BALL)]
 player_last_hit = None
+bounces = 0
+next_powerup_bounces = 6
 #####
 from objects import powerups
 
@@ -116,7 +118,8 @@ def collision(rleft, rtop, width, height,   # rectangle definition
 
 def reset_ball():
     global active_balls # absolute python 2023 
-    active_balls = [balls.Ball(WINDOW, 15, 5, 0.1, Colours.BALL)]
+
+    active_balls = [balls.Ball(WINDOW, 15, 2, 0.1, Colours.BALL)]
     rand = random.randint(0, 3)
     if rand == 1:
         active_balls[0].reverse_velocity_x()
@@ -135,7 +138,6 @@ while looping:
 
             if event.type == MOUSEBUTTONDOWN:
                 result = screens[active_screen].process_click(event.pos)
-                print(result)
                 if result != None:
                     active_screen = result
 
@@ -180,7 +182,7 @@ while looping:
 
         render_queue += [player1.paddle_vertical, player1.paddle_horizontal, player2.paddle_vertical, player2.paddle_horizontal]
 
-        #### Ball logic 
+        #### Game loop logic 
         
         out_of_bounds = False # Need to make it per ball, so just one can be popped when it goes out of bounds and not all reset 
         scoring_player = None
@@ -211,31 +213,63 @@ while looping:
             if paddle_collisions[0]:
                 ball.reverse_velocity_x(player1.paddle_vertical.paddle_pos)
                 player_last_hit = player1
+                bounces += 1
             elif paddle_collisions[1]:
                 ball.reverse_velocity_y(player2.paddle_horizontal.paddle_pos)
                 player_last_hit = player2
+                bounces += 1
             elif paddle_collisions[2]:
                 ball.reverse_velocity_x(player2.paddle_vertical.paddle_pos)
                 player_last_hit = player2
+                bounces += 1
             elif paddle_collisions[3]:
                 ball.reverse_velocity_y(player1.paddle_horizontal.paddle_pos)
                 player_last_hit = player1
+                bounces += 1
 
-            delete_queue = []
+            #### Powerup collisions
             for powerup in spawned_powerups:
                 if collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *ball.position.tuple(), ball.radius):
-                    delete_queue.append(powerup)
-                
-            for obj in delete_queue:
-                spawned_powerups.remove(obj)
+                    powerup.collect(bounces)
 
+        #### Powerup processing
+        delete_queue = []
+        for index, powerup in enumerate(spawned_powerups):
+
+            if powerup.collected:
+                if not powerup.effected:
+                    if type(powerup) == powerups.Pineapple:
+                        #print("yellow")
+                        for ball in active_balls:
+                            ball.speed = ball.speed + powerup.speed_increase
+                        
+                    powerup.effected = True
+                else:
+                    if powerup.expires_at > 0 and powerup.expires_at <= bounces:
+                        if type(powerup) == powerups.Pineapple:
+                            for ball in active_balls:
+                                ball.speed = ball.speed - powerup.speed_increase
+
+                        delete_queue.append(index)
+                        
+            for index in delete_queue:
+                spawned_powerups.pop(index)
+
+        #### Powerup spawning
+        if bounces >= next_powerup_bounces:
+            
+            spawned_powerups.append(powerups.Pineapple(WINDOW)) # make a function that gets a powerup and returns it so it can be appended
+
+            next_powerup_bounces += random.randrange(9, 21)
+
+        #### Respawn check
         if out_of_bounds:
             reset_ball()
             if(player_last_hit):
                 scoring_player.score += 1
                 player_last_hit = None
 
-        #### Graphics code 
+        ######## Graphics code ########
 
         WINDOW.fill(BACKGROUND)
 
@@ -257,6 +291,8 @@ while looping:
 
         WINDOW.blit(font.render("FPS: {}".format(round(clock.get_fps(), 1)), True, Colours.GREY), (5, 875))
         WINDOW.blit(font.render(str(active_balls[0].velocity.tuple()), True, Colours.GREY), (150, 875))
+        WINDOW.blit(font.render(str(bounces), True, Colours.GREY), (600, 875))
+        WINDOW.blit(font.render(str(active_balls[0].speed), True, Colours.GREY), (550, 875))
 
         # will need to do some things with last frame time, passing it into the movement funcs, so movement is smooth 
         
