@@ -14,8 +14,8 @@ class MainMenu():
 
         if self.screen_title == "Settings":
             self.buttons = [
-                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, -70), 240, 100, "Idk some setting", 1),
-                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 70), 240, 100, "another one", 1),
+                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, -70), 240, 100, "Placeholder", 1),
+                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 70), 240, 100, "Placeholder", 1),
                 button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 210), 240, 100, "Back", 0),
             ]
         else:
