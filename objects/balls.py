@@ -17,6 +17,8 @@ class Ball:
         self.bounce_modifier = bounce_modifier
         self.colour = colour
 
+        self.paddle_last_hit = None
+
         self.debug = True
         self.debug_dot = (100, 100)
     
@@ -24,35 +26,45 @@ class Ball:
         self.velocity.x += x
         self.velocity.y += y 
 
-    def reverse_velocity_x(self, paddle_pos = None):
-        self.velocity.x = -self.velocity.x
+    def reverse_velocity_x(self, paddle_pos = None, paddle_hit = None):
+        if paddle_hit is None:
+            self.velocity.x = -self.velocity.x
 
         if paddle_pos:
-            center_diff = (paddle_pos.y - self.position.y)
-            self.velocity.y = (-center_diff / 100) * 1
+            if self.paddle_last_hit != paddle_hit:
+                self.velocity.x = -self.velocity.x
+                center_diff = (paddle_pos.y - self.position.y)
+                self.velocity.y = (-center_diff / 100) * 1
 
-            if self.bounced == False:
-                self.bounced = True
-                self.speed = self.speed * 2
+                if self.bounced == False:
+                    self.bounced = True
+                    self.speed = self.speed * 2
 
-            if self.debug:
-                impact_y = abs(paddle_pos.y - center_diff)
-                self.debug_dot = (paddle_pos.x, impact_y)
+                if self.debug:
+                    impact_y = abs(paddle_pos.y - center_diff)
+                    self.debug_dot = (paddle_pos.x, impact_y)
 
-    def reverse_velocity_y(self, paddle_pos = None):
-        self.velocity.y = -self.velocity.y
+        self.paddle_last_hit = paddle_hit
+
+    def reverse_velocity_y(self, paddle_pos = None, paddle_hit = None):
+        if paddle_hit is None:
+            self.velocity.y = -self.velocity.y
 
         if paddle_pos:
-            center_diff = paddle_pos.x - self.position.x
-            self.velocity.x = (-center_diff / 100) * 1
+            if self.paddle_last_hit != paddle_hit:
+                self.velocity.y = -self.velocity.y
+                center_diff = paddle_pos.x - self.position.x
+                self.velocity.x = (-center_diff / 100) * 1
 
-            if self.bounced == False:
-                self.bounced = True
-                self.speed = self.speed * 2
+                if self.bounced == False:
+                    self.bounced = True
+                    self.speed = self.speed * 2
 
-            if self.debug:
-                impact_x = abs(paddle_pos.x - center_diff)
-                self.debug_dot = (impact_x, paddle_pos.y)
+                if self.debug:
+                    impact_x = abs(paddle_pos.x - center_diff)
+                    self.debug_dot = (impact_x, paddle_pos.y)
+
+        self.paddle_last_hit = paddle_hit
 
     def tick(self):
         self.position.x += (self.velocity.x * self.speed)

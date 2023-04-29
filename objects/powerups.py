@@ -15,7 +15,7 @@ class Pineapple():
         self.sprite = pygame.transform.scale(self.sprite, (self.sprite.get_width() / 6, self.sprite.get_height() / 6))
         self.col_rect = pygame.Rect(*self.position.tuple(), self.sprite.get_width(), self.sprite.get_height())
 
-        self.speed_increase = 2 # 2
+        self.speed_increase = 1 # 2
 
         self.collected = False # has been picked up by player
         self.effected = False # its effect has been applied to the player? 
@@ -42,7 +42,7 @@ class Pickle():
         self.sprite = pygame.image.load('image/pickle.png')
         self.sprite = pygame.transform.scale(self.sprite, (self.sprite.get_width() / 10, self.sprite.get_height() / 10))
         self.jar_sprite = pygame.image.load('image/jar.png')
-        self.jar_sprite = pygame.transform.scale(self.jar_sprite, (self.sprite.get_width() / 4, self.sprite.get_height() / 4))
+        self.jar_sprite = pygame.transform.scale(self.jar_sprite, (self.sprite.get_width() / 2.5, self.sprite.get_height() / 2.5))
         self.col_rect = pygame.Rect(*self.position.tuple(), self.sprite.get_width(), self.sprite.get_height())
 
         self.collected = False
@@ -64,5 +64,5 @@ class Pickle():
         if not self.collected:
             self.screen.blit(self.sprite, self.position.tuple())
 
-        if self.effected:
-            self.screen.blit(self.jar_sprite, self.position.tuple())
+        if self.effected and not self.expired:
+            self.screen.blit(self.jar_sprite, (self.position.x - 22, self.position.y - 22))

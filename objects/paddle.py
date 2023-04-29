@@ -4,11 +4,13 @@ from pygame.locals import *
 from utils.position import Position
 
 class Paddle():
-    def __init__(self, screen, orientation, starting_pos, colour):
+    def __init__(self, screen, orientation, starting_pos, colour, paddle_id):
 
         self.screen = screen
         self.orientation = orientation
         self.colour = colour
+
+        self.paddle_id = paddle_id
 
         if self.orientation == 0:
             self.paddle_rect = Position(190, 20)

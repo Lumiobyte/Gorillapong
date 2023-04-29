@@ -68,11 +68,11 @@ from objects import paddle, balls
 class Player:
     paddle_horizontal: paddle.Paddle
     paddle_vertical: paddle.Paddle
-    score: int
+    score = 0
     lives = 3
 
-player1 = Player(paddle.Paddle(WINDOW, 0, (300, 860), Colours.PLAYER_GREEN), paddle.Paddle(WINDOW, 1, (40, 300), Colours.PLAYER_GREEN), 0)
-player2 = Player(paddle.Paddle(WINDOW, 0, (1300, 40), Colours.PLAYER_RED), paddle.Paddle(WINDOW, 1, (1560, 300), Colours.PLAYER_RED), 0)
+player1 = Player(paddle.Paddle(WINDOW, 0, (300, 860), Colours.PLAYER_GREEN, 0), paddle.Paddle(WINDOW, 1, (40, 300), Colours.PLAYER_GREEN, 1))
+player2 = Player(paddle.Paddle(WINDOW, 0, (1300, 40), Colours.PLAYER_RED, 2), paddle.Paddle(WINDOW, 1, (1560, 300), Colours.PLAYER_RED, 3))
 
 active_balls = [balls.Ball(WINDOW, 15, 5, 0.5, Colours.BALL)]
 player_last_hit = None
@@ -85,6 +85,12 @@ from objects import powerups
 
 spawned_powerups = []
 spawned_powerups.append(powerups.Pineapple(WINDOW))
+
+#####
+
+current_frame_ticks = 0
+last_frame_ticks = 0
+time_delta = 0
 
 #####
 
@@ -131,7 +137,7 @@ def reset_ball():
     for obj in delete_queue:
         spawned_powerups.remove(obj)
 
-    active_balls = [balls.Ball(WINDOW, 15, 5, 0.1, Colours.BALL)]
+    active_balls = [balls.Ball(WINDOW, 15, 5, 0.1, Colours.BALL)] # 5
     rand = random.randint(0, 3)
     if rand == 1:
         active_balls[0].reverse_velocity_x()
@@ -176,6 +182,11 @@ try: # NEVER DO THIS!!!!!!!!
                     if player_who_died != 0:
                         WINDOW.blit(font.render(f"Player {player_who_died} died!", True, Colours.WHITE), (600, 300))
         else:
+
+            last_frame_ticks = current_frame_ticks
+            current_frame_ticks = pygame.time.get_ticks()
+            time_delta = (current_frame_ticks - last_frame_ticks) / 4 # quarter it so that the effect on speed is not so extreme
+
             ##################################################
             for event in pygame.event.get():
                 if event.type == KEYDOWN:
@@ -247,25 +258,25 @@ try: # NEVER DO THIS!!!!!!!!
                     paddle_collisions[3] = collision(*player1.paddle_horizontal.get_left_top(), *player1.paddle_horizontal.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
 
                 if paddle_collisions[0]:
-                    ball.reverse_velocity_x(player1.paddle_vertical.paddle_pos)
+                    ball.reverse_velocity_x(player1.paddle_vertical.paddle_pos, player1.paddle_vertical.paddle_id)
                     player_last_hit = player1
                     bounces += 1
                 elif paddle_collisions[1]:
-                    ball.reverse_velocity_y(player2.paddle_horizontal.paddle_pos)
+                    ball.reverse_velocity_y(player2.paddle_horizontal.paddle_pos, player2.paddle_horizontal.paddle_id)
                     player_last_hit = player2
                     bounces += 1
                 elif paddle_collisions[2]:
-                    ball.reverse_velocity_x(player2.paddle_vertical.paddle_pos)
+                    ball.reverse_velocity_x(player2.paddle_vertical.paddle_pos, player2.paddle_vertical.paddle_id)
                     player_last_hit = player2
                     bounces += 1
                 elif paddle_collisions[3]:
-                    ball.reverse_velocity_y(player1.paddle_horizontal.paddle_pos)
+                    ball.reverse_velocity_y(player1.paddle_horizontal.paddle_pos, player1.paddle_horizontal.paddle_id)
                     player_last_hit = player1
                     bounces += 1
 
                 #### Powerup collisions
                 for powerup in spawned_powerups:
-                    if collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *ball.position.tuple(), ball.radius):
+                    if collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *ball.position.tuple(), ball.radius) and not powerup.collected:
                         powerup.collect(bounces, i)
 
             #### Powerup processing
@@ -281,13 +292,15 @@ try: # NEVER DO THIS!!!!!!!!
                         elif type(powerup) == powerups.Pickle:
                                 powerup.update_pos(active_balls[i].position)
 
+                                """
                                 if player_last_hit: # prevent crashes when nobody has hit before the powerup was collected
                                     player_last_hit.lives -= 1 # since powerups are not working as intended, just take off a life for hitting a pickle at all
+                                """
                             
                         powerup.effected = True
                     else:
                         if powerup.expires_at > 0 and powerup.expires_at <= bounces:
-                            print("a powerup is ready to expre.")
+                            print(f"{powerup} is ready to expre.")
                             if type(powerup) == powerups.Pineapple:
                                 for ball in active_balls:
                                     ball.speed = ball.speed - powerup.speed_increase
@@ -295,7 +308,6 @@ try: # NEVER DO THIS!!!!!!!!
                                 player_last_hit.lives -= 1
                                 print("PICKLE SHOULD HAVE EXPIRED!!!")
 
-                            print(powerup)
                             powerup.expired = True
                             # don't use this way 
                             #delete_queue.append(powerup)
@@ -344,8 +356,8 @@ try: # NEVER DO THIS!!!!!!!!
 
             render_queue = []
 
-            WINDOW.blit(font.render("FPS: {}".format(round(clock.get_fps(), 1)), True, Colours.GREY), (5, 875))
-            WINDOW.blit(font.render(str(active_balls[0].velocity.tuple()), True, Colours.GREY), (150, 875))
+            WINDOW.blit(font.render("FPS: {} / {}".format(round(clock.get_fps(), 1), time_delta), True, Colours.GREY), (5, 875))
+            WINDOW.blit(font.render(str(active_balls[0].velocity.tuple()), True, Colours.GREY), (180, 875))
             WINDOW.blit(font.render(str(bounces), True, Colours.GREY), (600, 875))
             WINDOW.blit(font.render(str(active_balls[0].speed), True, Colours.GREY), (550, 875))
 
