@@ -6,7 +6,7 @@ import math
 from utils.position import Position
 
 class Ball:
-    def __init__(self, screen, radius, speed, bounce_modifier, colour):
+    def __init__(self, screen, radius, speed, bounce_modifier, colour, ball_id):
         self.screen = screen
 
         self.position = Position(800, 450)
@@ -19,6 +19,7 @@ class Ball:
 
         self.paddle_last_hit = None
 
+        self.ball_id = ball_id
         self.debug = True
         self.debug_dot = (100, 100)
     
@@ -69,6 +70,16 @@ class Ball:
     def tick(self):
         self.position.x += (self.velocity.x * self.speed)
         self.position.y += (self.velocity.y * self.speed)
+    
+    def future_position(self, iterations):
+        x = self.position.x
+        y = self.position.y
+
+        for i in range(0, iterations + 1):
+            x += (self.velocity.x * self.speed)
+            y += (self.velocity.y * self.speed)
+
+        return (x, y)
 
     def render(self):
         pygame.draw.circle(self.screen, self.colour, self.position.tuple(), self.radius)

@@ -36,6 +36,7 @@ from pygame.locals import *
 import sys
 from dataclasses import dataclass
 import random
+import traceback
 
 from utils.colours import Colours
 from utils import renderutils
@@ -74,7 +75,7 @@ class Player:
 player1 = Player(paddle.Paddle(WINDOW, 0, (300, 860), Colours.PLAYER_GREEN, 0), paddle.Paddle(WINDOW, 1, (40, 300), Colours.PLAYER_GREEN, 1))
 player2 = Player(paddle.Paddle(WINDOW, 0, (1300, 40), Colours.PLAYER_RED, 2), paddle.Paddle(WINDOW, 1, (1560, 300), Colours.PLAYER_RED, 3))
 
-active_balls = [balls.Ball(WINDOW, 15, 5, 0.5, Colours.BALL)]
+active_balls = [balls.Ball(WINDOW, 15, 5, 0.5, Colours.BALL, 0)]
 player_last_hit = None
 bounces = 0
 next_powerup_bounces = 6
@@ -84,7 +85,7 @@ player_who_died = 0 # hacky way to implement deaths to lives
 from objects import powerups
 
 spawned_powerups = []
-spawned_powerups.append(powerups.Pineapple(WINDOW))
+spawned_powerups.append(powerups.Water(WINDOW))
 
 #####
 
@@ -137,7 +138,7 @@ def reset_ball():
     for obj in delete_queue:
         spawned_powerups.remove(obj)
 
-    active_balls = [balls.Ball(WINDOW, 15, 5, 0.1, Colours.BALL)] # 5
+    active_balls = [balls.Ball(WINDOW, 15, 5, 0.1, Colours.BALL, 0)] # 5
     rand = random.randint(0, 3)
     if rand == 1:
         active_balls[0].reverse_velocity_x()
@@ -150,12 +151,14 @@ def reset_ball():
 def get_new_powerup():
     global bounces
 
-    spawn_rand = random.randint(1, 2)
+    spawn_rand = random.randint(1, 3)
 
     if spawn_rand == 1:
         return powerups.Pineapple(WINDOW)
     elif spawn_rand == 2:
         return powerups.Pickle(WINDOW)
+    elif spawn_rand == 3:
+        return powerups.Water(WINDOW)
 
 try: # NEVER DO THIS!!!!!!!!
     looping = True
@@ -243,8 +246,8 @@ try: # NEVER DO THIS!!!!!!!!
                     out_of_bounds = True
                     scoring_player = player1
 
-
-                render_queue.append(ball)
+                # We add balls to render queue later so that they are not behind powerups e.g. water puddle
+                #render_queue.append(ball)
 
                 paddle_collisions = [False, False, False, False]
 
@@ -276,8 +279,24 @@ try: # NEVER DO THIS!!!!!!!!
 
                 #### Powerup collisions
                 for powerup in spawned_powerups:
-                    if collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *ball.position.tuple(), ball.radius) and not powerup.collected:
-                        powerup.collect(bounces, i)
+                    if collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *ball.position.tuple(), ball.radius):
+                        if powerup.collected:
+                            if type(powerup) == powerups.Water and powerup.effected:
+                                if not powerup.is_in_puddle(ball.ball_id):
+                                    if not ball.bounced:
+                                        ball.speed = 1
+                                        ball.bounced = True
+                                        powerup.enter_puddle(ball.ball_id)
+                                    else:
+                                        ball.speed = ball.speed + powerup.enter_puddle(ball.ball_id)
+                                    print("Entered puddle")
+                                else:
+                                    next_position = ball.future_position(1)
+                                    if not collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *next_position, ball.radius):
+                                        ball.speed = ball.speed + powerup.exit_puddle(ball.ball_id)
+                                        print("Exited puddle")
+                        else:
+                            powerup.collect(bounces, i)
 
             #### Powerup processing
             delete_queue = []
@@ -296,7 +315,9 @@ try: # NEVER DO THIS!!!!!!!!
                                 if player_last_hit: # prevent crashes when nobody has hit before the powerup was collected
                                     player_last_hit.lives -= 1 # since powerups are not working as intended, just take off a life for hitting a pickle at all
                                 """
-                            
+                        elif type(powerup) == powerups.Water:
+                            pass
+
                         powerup.effected = True
                     else:
                         if powerup.expires_at > 0 and powerup.expires_at <= bounces:
@@ -307,6 +328,8 @@ try: # NEVER DO THIS!!!!!!!!
                             elif type(powerup) == powerups.Pickle:
                                 player_last_hit.lives -= 1
                                 print("PICKLE SHOULD HAVE EXPIRED!!!")
+                            elif type(powerup) == powerups.Water:
+                                pass
 
                             powerup.expired = True
                             # don't use this way 
@@ -351,6 +374,7 @@ try: # NEVER DO THIS!!!!!!!!
             WINDOW.blit(score_text_2, score_text_2_rect)
 
             render_queue += spawned_powerups
+            render_queue += active_balls
             for item in render_queue:
                 item.render()
 
@@ -360,6 +384,7 @@ try: # NEVER DO THIS!!!!!!!!
             WINDOW.blit(font.render(str(active_balls[0].velocity.tuple()), True, Colours.GREY), (180, 875))
             WINDOW.blit(font.render(str(bounces), True, Colours.GREY), (600, 875))
             WINDOW.blit(font.render(str(active_balls[0].speed), True, Colours.GREY), (550, 875))
+            WINDOW.blit(font.render(f"NEXT P: {next_powerup_bounces - bounces}", True, Colours.GREY), (750, 875))
 
             WINDOW.blit(font.render("Blue Lives: " + str(player1.lives), True, Colours.GREY), (1000, 850))
             WINDOW.blit(font.render("Orange Lives: " + str(player2.lives), True, Colours.GREY), (970, 875))
@@ -372,6 +397,9 @@ try: # NEVER DO THIS!!!!!!!!
         clock.tick(FPS)
 
 except Exception as e: # worst error handling method 
+
+    print(traceback.print_exc())
+
     while True:
         for event in pygame.event.get():
             if event.type == KEYDOWN:
