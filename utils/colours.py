@@ -5,6 +5,8 @@ class Colours():
     PLAYER_RED = (247, 148, 87) #(255, 95, 85)
     PLAYER_GREEN = (138, 227, 221) #(143, 227, 138)
 
+    LIGHT_PASTEL_GREEN = (191, 255, 189) # button hover colour
+
     PURPLE = (137, 52, 235)
 
     WHITE = (255, 255, 255)

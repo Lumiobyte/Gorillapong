@@ -13,28 +13,28 @@ class MainMenu():
         self.screen_title = title
         self.font = pygame.font.SysFont(None, 48)
 
-        self.last_click = (50, 50) # debug feature
+        self.last_pos = (50, 50) # debug feature
 
         if self.screen_title == "Settings":
             self.buttons = [
-                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, -70), 240, 100, "Placeholder", 1),
-                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 70), 240, 100, "Placeholder", 1),
-                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 210), 240, 100, "Back", 0),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, -70), 240, 100, "Placeholder", 1),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 70), 240, 100, "Placeholder", 1),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 210), 240, 100, "Back", 0),
 
-                button.Button(self.screen, Colours.WHITE, self.__calc_position(-110, -180), 200, 60, "1600x900", 1000),
-                button.Button(self.screen, Colours.WHITE, self.__calc_position(110, -180), 200, 60, "1280x720", 1001)
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-110, -180), 200, 60, "1600x900", 1000),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(110, -180), 200, 60, "1280x720", 1001)
             ]
         else:
             self.buttons = [
-                button.Button(self.screen, Colours.WHITE, self.__calc_position(-150, -70), 240, 100, "1-Player", 4),
-                button.Button(self.screen, Colours.WHITE, self.__calc_position(150, -70), 240, 100, "2-Player", 3),
-                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 70), 240, 100, "Settings", 1),
-                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 210), 240, 100, "Exit", -1),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-150, -70), 240, 100, "Play with AI", 4),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(150, -70), 240, 100, "Local Multiplayer", 3),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 70), 240, 100, "Settings", 1),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 210), 240, 100, "Exit", -1),
             ]
 
-    def process_click(self, pos): # Execute actions for clicks directed to this menu
+    def process_position(self, pos, clicked = False): # Execute actions for clicks directed to this menu
 
-        self.last_click = pos
+        self.last_pos = pos
 
         for btn in self.buttons:
             if database.get_resolution != database.get_max_resolution(): # Max res value in database again
@@ -43,16 +43,23 @@ class MainMenu():
                 collided, action = btn.check_collision(pos)
 
             if collided:
-                if action == 1000:
-                    database.set_resolution((1600, 900))
-                    force_restart.force_restart("Resolution has been updated to 1600x900")
-                elif action == 1001:
-                    database.set_resolution((1280, 720))
-                    force_restart.force_restart("Resolution has been updated to 1280x720")
-                else:
-                    if action == 4:
-                        return 3, True
-                    return action, False
+
+                btn.hover()
+
+                if clicked:
+                    if action == 1000:
+                        database.set_resolution((1600, 900))
+                        force_restart.force_restart("Resolution has been updated to 1600x900")
+                    elif action == 1001:
+                        database.set_resolution((1280, 720))
+                        force_restart.force_restart("Resolution has been updated to 1280x720")
+                    else:
+                        if action == 4:
+                            return 3, True
+                        return action, False
+                    
+        if clicked: # This fix kills me. The entire UI needs a rewrite
+            return None, False
 
     def render(self): # Return render for this menu
 
@@ -62,7 +69,7 @@ class MainMenu():
         for btn in self.buttons:
             btn.render()
 
-        #pygame.draw.circle(self.screen, Colours.PURPLE, (self.last_click[0], self.last_click[1]), radius=5) # DEBUG DOT 
+        #pygame.draw.circle(self.screen, Colours.PURPLE, (self.last_pos[0], self.last_pos[1]), radius=5) # DEBUG DOT 
 
     def __calc_position(self, w, h):
         return ((self.screen.get_width() / 2) + w, (self.screen.get_height() / 2) + h)

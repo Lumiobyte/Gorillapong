@@ -46,7 +46,7 @@ BACKGROUND = (28, 28, 28)
 FPS = 147
 clock = pygame.time.Clock()
 
-max_resolution = (1600, 900)
+max_resolution = database.get_max_resolution()
 
 if database.get_resolution() == max_resolution:
     WINDOW = pygame.display.set_mode(max_resolution)
@@ -195,7 +195,7 @@ try: # NEVER DO THIS!!!!!!!!
                     pass
 
                 if event.type == MOUSEBUTTONDOWN:
-                    result, ai_toggle = screens[active_screen].process_click(event.pos)
+                    result, ai_toggle = screens[active_screen].process_position(event.pos, True)
                     if result != None:
                         active_screen = result
 
@@ -212,6 +212,7 @@ try: # NEVER DO THIS!!!!!!!!
                 sys.exit()
             else:
                 if active_screen != 3:
+                    screens[active_screen].process_position(pygame.mouse.get_pos())
                     WINDOW.fill(BACKGROUND)
                     screens[active_screen].render()
                     if player_who_died != 0:
@@ -230,8 +231,9 @@ try: # NEVER DO THIS!!!!!!!!
                     if event.key == K_1:
                         spawned_powerups.append(get_new_powerup())
                     if event.key == K_BACKSPACE:
-                        pygame.quit()
-                        sys.exit()
+                        active_screen = 0 # Back to main menu
+                        #pygame.quit()
+                        #sys.exit()
 
                 if event.type == QUIT:
                     pygame.quit()
@@ -361,9 +363,9 @@ try: # NEVER DO THIS!!!!!!!!
                                     if not ball.bounced:
                                         ball.speed = 1
                                         ball.bounced = True
-                                        powerup.enter_puddle(ball.ball_id)
                                     else:
                                         ball.speed = ball.speed + powerup.enter_puddle(ball.ball_id)
+                                    powerup.enter_puddle(ball.ball_id)
                                     ball.in_puddle = True
                                 else:
                                     next_position = ball.future_position(1)
