@@ -26,7 +26,8 @@ class MainMenu():
             ]
         else:
             self.buttons = [
-                button.Button(self.screen, Colours.WHITE, self.__calc_position(0, -70), 240, 100, "Play", 3),
+                button.Button(self.screen, Colours.WHITE, self.__calc_position(-150, -70), 240, 100, "1-Player", 4),
+                button.Button(self.screen, Colours.WHITE, self.__calc_position(150, -70), 240, 100, "2-Player", 3),
                 button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 70), 240, 100, "Settings", 1),
                 button.Button(self.screen, Colours.WHITE, self.__calc_position(0, 210), 240, 100, "Exit", -1),
             ]
@@ -49,7 +50,9 @@ class MainMenu():
                     database.set_resolution((1280, 720))
                     force_restart.force_restart("Resolution has been updated to 1280x720")
                 else:
-                    return action
+                    if action == 4:
+                        return 3, True
+                    return action, False
 
     def render(self): # Return render for this menu
 

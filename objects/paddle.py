@@ -12,6 +12,10 @@ class Paddle():
 
         self.paddle_id = paddle_id
 
+        self.speed = 10
+        self.ai_speed = 4
+        self.ai_paddle = False
+
         if self.orientation == 0:
             self.paddle_rect = Position(190, 20)
             self.paddle_pos = Position(*starting_pos)
@@ -21,17 +25,29 @@ class Paddle():
 
     def move_positive(self):
         if self.orientation == 0:
-            self.paddle_pos.x += 10
+            if self.ai_paddle:
+                self.paddle_pos.x += self.ai_speed
+            else:
+                self.paddle_pos.x += self.speed
         else:
-            self.paddle_pos.y -= 10
+            if self.ai_paddle:
+                self.paddle_pos.y -= self.ai_speed
+            else:
+                self.paddle_pos.y -= self.speed
 
         self.limit_pos()
 
     def move_negative(self):
         if self.orientation == 0:
-            self.paddle_pos.x -= 10
+            if self.ai_paddle:
+                self.paddle_pos.x -= self.ai_speed
+            else:
+                self.paddle_pos.x -= self.speed
         else:
-            self.paddle_pos.y += 10
+            if self.ai_paddle:
+                self.paddle_pos.y += self.ai_speed
+            else:
+                self.paddle_pos.y += self.speed
 
         self.limit_pos()
 

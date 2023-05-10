@@ -21,7 +21,7 @@ class Ball:
         self.in_puddle = False
 
         self.ball_id = ball_id
-        self.debug = True
+        self.debug = False
         self.debug_dot = (100, 100)
     
     def change_velocity(self, x, y):

@@ -116,6 +116,11 @@ time_delta = 0
 
 #####
 
+ai = False # Whether the AI is enabled or not
+aim_randomiser = 1 # Determines where the AI will attempt to land the ball on its paddles. 0 = one corner 1 = middle 2 = other corner
+
+#####
+
 import math
 
 def collision(rleft, rtop, width, height,   # rectangle definition
@@ -190,11 +195,17 @@ try: # NEVER DO THIS!!!!!!!!
                     pass
 
                 if event.type == MOUSEBUTTONDOWN:
-                    result = screens[active_screen].process_click(event.pos)
+                    result, ai_toggle = screens[active_screen].process_click(event.pos)
                     if result != None:
                         active_screen = result
+
                         player1.lives = 3
                         player2.lives = 3
+                        spawned_powerups = []
+
+                        ai = ai_toggle
+                        player2.paddle_horizontal.ai_paddle = ai_toggle
+                        player2.paddle_vertical.ai_paddle = ai_toggle
 
             if event.type == QUIT or active_screen == -1:
                 pygame.quit()
@@ -218,6 +229,9 @@ try: # NEVER DO THIS!!!!!!!!
                         reset_ball()
                     if event.key == K_1:
                         spawned_powerups.append(get_new_powerup())
+                    if event.key == K_BACKSPACE:
+                        pygame.quit()
+                        sys.exit()
 
                 if event.type == QUIT:
                     pygame.quit()
@@ -244,14 +258,17 @@ try: # NEVER DO THIS!!!!!!!!
             if keys[K_d]:
                 player1.paddle_horizontal.move_positive()
             
-            if keys[K_UP]:
-                player2.paddle_vertical.move_positive()
-            if keys[K_DOWN]:
-                player2.paddle_vertical.move_negative()
-            if keys[K_RIGHT]:
-                player2.paddle_horizontal.move_positive()
-            if keys[K_LEFT]:
-                player2.paddle_horizontal.move_negative()
+            if ai:
+                pass # DO NUFFIN 
+            else:
+                if keys[K_UP]:
+                    player2.paddle_vertical.move_positive()
+                if keys[K_DOWN]:
+                    player2.paddle_vertical.move_negative()
+                if keys[K_RIGHT]:
+                    player2.paddle_horizontal.move_positive()
+                if keys[K_LEFT]:
+                    player2.paddle_horizontal.move_negative()
 
             render_queue += [player1.paddle_vertical, player1.paddle_horizontal, player2.paddle_vertical, player2.paddle_horizontal]
 
@@ -260,6 +277,30 @@ try: # NEVER DO THIS!!!!!!!!
             out_of_bounds = False # Need to make it per ball, so just one can be popped when it goes out of bounds and not all reset 
             scoring_player = None
             for i, ball in enumerate(active_balls):
+
+                if ai: # add delay to switching directions
+                    divisor = random.randint(21, 25) / 10 # Add some flavor to corner shots by hitting different parts of the paddle
+                    if aim_randomiser == 0:
+                        impact_x = player2.paddle_horizontal.paddle_pos.x - player2.paddle_horizontal.paddle_rect.x / divisor
+                        impact_y = player2.paddle_vertical.paddle_pos.y - player2.paddle_vertical.paddle_rect.y / divisor
+                    elif aim_randomiser == 1:
+                        impact_x = player2.paddle_horizontal.paddle_pos.x
+                        impact_y = player2.paddle_vertical.paddle_pos.y
+                    elif aim_randomiser == 2:
+                        impact_x = player2.paddle_horizontal.paddle_pos.x + player2.paddle_horizontal.paddle_rect.x / divisor
+                        impact_y = player2.paddle_vertical.paddle_pos.y + player2.paddle_vertical.paddle_rect.y / divisor
+
+
+                    if impact_x > ball.position.x:
+                        player2.paddle_horizontal.move_negative()
+                    else:
+                        player2.paddle_horizontal.move_positive()
+                    
+                    if impact_y > ball.position.y:
+                        player2.paddle_vertical.move_positive()
+                    else:
+                        player2.paddle_vertical.move_negative()
+
                 ball.tick()
 
                 if ball.position.x < -100 or ball.position.y > 1000:
@@ -283,22 +324,33 @@ try: # NEVER DO THIS!!!!!!!!
                 if ball.position.y > (600 - ball.radius):
                     paddle_collisions[3] = collision(*player1.paddle_horizontal.get_left_top(), *player1.paddle_horizontal.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
 
+                paddle_hit = None
+
                 if paddle_collisions[0]:
                     ball.reverse_velocity_x(player1.paddle_vertical.paddle_pos, player1.paddle_vertical.paddle_id)
                     player_last_hit = player1
                     bounces += 1
+                    paddle_hit = player1.paddle_vertical
                 elif paddle_collisions[1]:
                     ball.reverse_velocity_y(player2.paddle_horizontal.paddle_pos, player2.paddle_horizontal.paddle_id)
                     player_last_hit = player2
                     bounces += 1
+                    paddle_hit = player2.paddle_horizontal
                 elif paddle_collisions[2]:
                     ball.reverse_velocity_x(player2.paddle_vertical.paddle_pos, player2.paddle_vertical.paddle_id)
                     player_last_hit = player2
                     bounces += 1
+                    paddle_hit = player2.paddle_vertical
                 elif paddle_collisions[3]:
                     ball.reverse_velocity_y(player1.paddle_horizontal.paddle_pos, player1.paddle_horizontal.paddle_id)
                     player_last_hit = player1
                     bounces += 1
+                    paddle_hit = player1.paddle_horizontal
+
+                if ai:
+                    if paddle_hit == player2.paddle_vertical or paddle_hit == player2.paddle_horizontal:
+                        # It may be necessary to ensure that one of the human's paddles has been hit before allowing AI to make this choice again
+                        aim_randomiser = random.randint(0, 2)
 
                 #### Powerup collisions
                 for powerup in spawned_powerups:
@@ -313,13 +365,11 @@ try: # NEVER DO THIS!!!!!!!!
                                     else:
                                         ball.speed = ball.speed + powerup.enter_puddle(ball.ball_id)
                                     ball.in_puddle = True
-                                    print("Entered puddle")
                                 else:
                                     next_position = ball.future_position(1)
                                     if not collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *next_position, ball.radius):
                                         ball.speed = ball.speed + powerup.exit_puddle(ball.ball_id)
                                         ball.in_puddle = False
-                                        print("Exited puddle")
                         else:
                             powerup.collect(bounces, i)
 
@@ -346,7 +396,7 @@ try: # NEVER DO THIS!!!!!!!!
                         powerup.effected = True
                     else:
                         if powerup.expires_at > 0 and powerup.expires_at <= bounces:
-                            print(f"{powerup} is ready to expre.")
+                            print(f"{powerup} is ready to expire.")
                             if type(powerup) == powerups.Pineapple:
                                 for ball in active_balls:
                                     ball.speed = ball.speed - powerup.speed_increase
@@ -406,10 +456,12 @@ try: # NEVER DO THIS!!!!!!!!
             render_queue = []
 
             WINDOW.blit(font.render("FPS: {} / {}".format(round(clock.get_fps(), 1), time_delta), True, Colours.GREY), (5, 875))
-            WINDOW.blit(font.render(str(active_balls[0].velocity.tuple()), True, Colours.GREY), (180, 875))
+            WINDOW.blit(font.render(f"V: ({round(active_balls[0].velocity.x, 5)}, {round(active_balls[0].velocity.y, 5)})", True, Colours.GREY), (180, 875))
             WINDOW.blit(font.render(str(bounces), True, Colours.GREY), (600, 875))
             WINDOW.blit(font.render(str(active_balls[0].speed), True, Colours.GREY), (550, 875))
-            WINDOW.blit(font.render(f"NEXT P: {next_powerup_bounces - bounces}", True, Colours.GREY), (750, 875))
+            WINDOW.blit(font.render(f"NEXT P: {next_powerup_bounces - bounces}", True, Colours.GREY), (710, 875))
+            if ai:
+                WINDOW.blit(font.render(f"AIM: {aim_randomiser}", True, Colours.GREY), (850, 875))
 
             WINDOW.blit(font.render("Blue Lives: " + str(player1.lives), True, Colours.GREY), (1000, 850))
             WINDOW.blit(font.render("Orange Lives: " + str(player2.lives), True, Colours.GREY), (970, 875))
