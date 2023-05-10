@@ -39,16 +39,37 @@ import random
 import traceback
 
 from utils.colours import Colours
-from utils import renderutils
+from utils import renderutils, database
 
 pygame.init()
 BACKGROUND = (28, 28, 28)
 FPS = 147
 clock = pygame.time.Clock()
 
-#WINDOW = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-WINDOW = pygame.display.set_mode((1600, 900), pygame.RESIZABLE)
+max_resolution = (1600, 900)
+
+if database.get_resolution() == max_resolution:
+    WINDOW = pygame.display.set_mode(max_resolution)
+    SCREEN = None
+else:
+    WINDOW = pygame.Surface(max_resolution)
+    SCREEN = pygame.display.set_mode(database.get_resolution())
+
 pygame.display.set_caption("Gorilla Pong")
+
+""" This is unnecessary, since resolution can only be switched on the main menu and doing so forces a game restart.
+def switch_resolution(new_res):
+    global WINDOW
+    global SCREEN
+
+    if new_res == max_resolution:
+        WINDOW = pygame.display.set_mode(new_res)
+    else:
+        WINDOW = pygame.Surface(max_resolution)
+        SCREEN = pygame.display.set_mode(new_res)
+
+    database.set_resolution(new_res) # TEMPORARY FOR TESTING.
+"""
 
 #####
 screens = []
@@ -195,6 +216,8 @@ try: # NEVER DO THIS!!!!!!!!
                 if event.type == KEYDOWN:
                     if event.key == K_ESCAPE:
                         reset_ball()
+                    if event.key == K_1:
+                        spawned_powerups.append(get_new_powerup())
 
                 if event.type == QUIT:
                     pygame.quit()
@@ -281,19 +304,21 @@ try: # NEVER DO THIS!!!!!!!!
                 for powerup in spawned_powerups:
                     if collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *ball.position.tuple(), ball.radius):
                         if powerup.collected:
-                            if type(powerup) == powerups.Water and powerup.effected:
-                                if not powerup.is_in_puddle(ball.ball_id):
+                            if type(powerup) == powerups.Water and powerup.effected and not powerup.expired:
+                                if not powerup.is_in_puddle(ball.ball_id) and not ball.in_puddle:
                                     if not ball.bounced:
                                         ball.speed = 1
                                         ball.bounced = True
                                         powerup.enter_puddle(ball.ball_id)
                                     else:
                                         ball.speed = ball.speed + powerup.enter_puddle(ball.ball_id)
+                                    ball.in_puddle = True
                                     print("Entered puddle")
                                 else:
                                     next_position = ball.future_position(1)
                                     if not collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *next_position, ball.radius):
                                         ball.speed = ball.speed + powerup.exit_puddle(ball.ball_id)
+                                        ball.in_puddle = False
                                         print("Exited puddle")
                         else:
                             powerup.collect(bounces, i)
@@ -388,10 +413,15 @@ try: # NEVER DO THIS!!!!!!!!
 
             WINDOW.blit(font.render("Blue Lives: " + str(player1.lives), True, Colours.GREY), (1000, 850))
             WINDOW.blit(font.render("Orange Lives: " + str(player2.lives), True, Colours.GREY), (970, 875))
-
-
-            # will need to do some things with last frame time, passing it into the movement funcs, so movement is smooth 
             
+
+        if database.get_resolution() != max_resolution:
+            WINDOW_downscaled = pygame.transform.scale(WINDOW, database.get_resolution())
+            SCREEN.blit(WINDOW_downscaled, (0, 0))
+        else:
+            # Shouldn't need to do anything here if the resolution switching method works out 
+            #SCREEN.blit(WINDOW, (0, 0))
+            pass
 
         pygame.display.update()
         clock.tick(FPS)

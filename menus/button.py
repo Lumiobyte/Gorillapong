@@ -3,6 +3,7 @@ from pygame.locals import *
 
 from utils.colours import Colours
 
+# Add button highlights on hover
 class Button():
     def __init__(self, window, colour, center, w, h, title, action):
         self.screen = window

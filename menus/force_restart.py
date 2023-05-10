@@ -1,0 +1,33 @@
+import sys
+import pygame
+from pygame.locals import *
+
+from utils import database
+from utils.colours import Colours
+
+def force_restart(note):
+
+    clock = pygame.time.Clock()
+    screen = pygame.display.set_mode(database.get_resolution())
+    font = pygame.font.SysFont(None, 48)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+            elif event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+
+        screen.fill(Colours.BG_GREY)
+
+        screen.blit(font.render("It is necessary to restart the game.", True, Colours.PLAYER_RED), (500, 300))
+        screen.blit(font.render("Press ESC key to exit the game.", True, Colours.WHITE), (500, 350))
+        screen.blit(font.render(note, True, Colours.PLAYER_GREEN), (500, 450))
+
+        pygame.display.update()
+        clock.tick(147)
+
+            

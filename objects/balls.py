@@ -18,6 +18,7 @@ class Ball:
         self.colour = colour
 
         self.paddle_last_hit = None
+        self.in_puddle = False
 
         self.ball_id = ball_id
         self.debug = True
