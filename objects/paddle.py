@@ -13,7 +13,7 @@ class Paddle():
         self.paddle_id = paddle_id
 
         self.speed = 10
-        self.ai_speed = 4
+        self.ai_speed = 10 #4
         self.ai_paddle = False
 
         if self.orientation == 0:

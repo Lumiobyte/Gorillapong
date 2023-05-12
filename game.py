@@ -280,7 +280,7 @@ try: # NEVER DO THIS!!!!!!!!
             scoring_player = None
             for i, ball in enumerate(active_balls):
 
-                if ai: # add delay to switching directions
+                if ai: # Ed Townsend
                     divisor = random.randint(21, 25) / 10 # Add some flavor to corner shots by hitting different parts of the paddle
                     if aim_randomiser == 0:
                         impact_x = player2.paddle_horizontal.paddle_pos.x - player2.paddle_horizontal.paddle_rect.x / divisor
@@ -304,6 +304,10 @@ try: # NEVER DO THIS!!!!!!!!
                         player2.paddle_vertical.move_negative()
 
                 ball.tick()
+
+                # For testing
+                #ball.position.x = pygame.mouse.get_pos()[0]
+                #ball.position.y = pygame.mouse.get_pos()[1]
 
                 if ball.position.x < -100 or ball.position.y > 1000:
                     out_of_bounds = True
@@ -363,13 +367,13 @@ try: # NEVER DO THIS!!!!!!!!
                                     if not ball.bounced:
                                         ball.speed = 1
                                         ball.bounced = True
+                                        powerup.enter_puddle(ball.ball_id) 
                                     else:
                                         ball.speed = ball.speed + powerup.enter_puddle(ball.ball_id)
-                                    powerup.enter_puddle(ball.ball_id)
                                     ball.in_puddle = True
                                 else:
                                     next_position = ball.future_position(1)
-                                    if not collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *next_position, ball.radius):
+                                    if not collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *next_position, ball.radius) and ball.in_puddle:
                                         ball.speed = ball.speed + powerup.exit_puddle(ball.ball_id)
                                         ball.in_puddle = False
                         else:

@@ -92,6 +92,8 @@ class Water():
         self.expires_at = bounces + 8
 
         self.col_rect = pygame.Rect(*self.position.tuple(), self.puddle_sprite.get_width(), self.puddle_sprite.get_height())
+        self.position.x -= self.col_rect.width / 2
+        self.position.y -= self.col_rect.height / 2
 
     def enter_puddle(self, ball_id):
         self.balls_in_puddle.append(ball_id)
