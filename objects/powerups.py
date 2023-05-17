@@ -119,3 +119,33 @@ class Water():
             else:
                 self.screen.blit(self.sprite, self.position.tuple())
 
+class Pringle():
+    def __init__(self, screen, powerup_id):
+        self.screen = screen
+
+        self.powerup_id = powerup_id
+
+        self.position = Position(random.randrange(500, 1100), random.randrange(250, 550))
+        self.sprite = pygame.image.load('image/pringles.png')
+        self.sprite = pygame.transform.scale(self.sprite, (self.sprite.get_width() / 10, self.sprite.get_height() / 10))
+
+        self.col_rect = pygame.Rect(*self.position.tuple(), self.sprite.get_width(), self.sprite.get_height())
+
+        self.collected = False
+        self.effected = False
+        self.expired = False
+        self.expires_at = -1
+
+    def collect(self, bounces, ball_index):
+        self.collected = True
+        self.expires_at = bounces + 10
+
+        self.col_rect = pygame.Rect(self.position.x + 15, self.position.y + 15, 20, 170) # Need to randomise the spawn position a bit, and change whether it's horizontal or vertical barrier
+        
+    def render(self):
+        if not self.expired:
+            if self.collected:
+                pygame.draw.rect(self.screen, Colours.PRINGLE_WALL, self.col_rect)
+            else:
+                self.screen.blit(self.sprite, self.position.tuple())
+

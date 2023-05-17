@@ -7,6 +7,8 @@ class Colours():
 
     LIGHT_PASTEL_GREEN = (191, 255, 189) # button hover colour
 
+    PRINGLE_WALL = (255, 214, 51)
+
     PURPLE = (137, 52, 235)
 
     WHITE = (255, 255, 255)

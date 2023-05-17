@@ -19,6 +19,7 @@ class Ball:
 
         self.paddle_last_hit = None
         self.in_puddle = False
+        self.pringle_last_hit = None
 
         self.ball_id = ball_id
         self.debug = False

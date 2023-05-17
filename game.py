@@ -100,6 +100,7 @@ active_balls = [balls.Ball(WINDOW, 15, 5, 0.5, Colours.BALL, 0)]
 player_last_hit = None
 bounces = 0
 next_powerup_bounces = 6
+powerup_spawn_counter = 0 # Useful for any powerups that need a unique ID
 
 player_who_died = 0 # hacky way to implement deaths to lives
 #####
@@ -176,8 +177,10 @@ def reset_ball():
 
 def get_new_powerup():
     global bounces
+    global powerup_spawn_counter
 
-    spawn_rand = random.randint(1, 3)
+    spawn_rand = random.randint(4, 4)
+    powerup_spawn_counter += 1
 
     if spawn_rand == 1:
         return powerups.Pineapple(WINDOW)
@@ -185,6 +188,8 @@ def get_new_powerup():
         return powerups.Pickle(WINDOW)
     elif spawn_rand == 3:
         return powerups.Water(WINDOW)
+    elif spawn_rand == 4:
+        return powerups.Pringle(WINDOW, powerup_spawn_counter)
 
 try: # NEVER DO THIS!!!!!!!!
     looping = True
@@ -337,21 +342,25 @@ try: # NEVER DO THIS!!!!!!!!
                     player_last_hit = player1
                     bounces += 1
                     paddle_hit = player1.paddle_vertical
+                    ball.pringle_last_hit = None
                 elif paddle_collisions[1]:
                     ball.reverse_velocity_y(player2.paddle_horizontal.paddle_pos, player2.paddle_horizontal.paddle_id)
                     player_last_hit = player2
                     bounces += 1
                     paddle_hit = player2.paddle_horizontal
+                    ball.pringle_last_hit = None
                 elif paddle_collisions[2]:
                     ball.reverse_velocity_x(player2.paddle_vertical.paddle_pos, player2.paddle_vertical.paddle_id)
                     player_last_hit = player2
                     bounces += 1
                     paddle_hit = player2.paddle_vertical
+                    ball.pringle_last_hit = None
                 elif paddle_collisions[3]:
                     ball.reverse_velocity_y(player1.paddle_horizontal.paddle_pos, player1.paddle_horizontal.paddle_id)
                     player_last_hit = player1
                     bounces += 1
                     paddle_hit = player1.paddle_horizontal
+                    ball.pringle_last_hit = None
 
                 if ai:
                     if paddle_hit == player2.paddle_vertical or paddle_hit == player2.paddle_horizontal:
@@ -376,6 +385,11 @@ try: # NEVER DO THIS!!!!!!!!
                                     if not collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *next_position, ball.radius) and ball.in_puddle:
                                         ball.speed = ball.speed + powerup.exit_puddle(ball.ball_id)
                                         ball.in_puddle = False
+                            if type(powerup) == powerups.Pringle and powerup.effected and not powerup.expired:
+                                if collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *ball.position.tuple(), ball.radius):
+                                    if ball.pringle_last_hit != powerup.powerup_id:
+                                        ball.reverse_velocity_x()
+                                        ball.pringle_last_hit = powerup.powerup_id
                         else:
                             powerup.collect(bounces, i)
 
@@ -398,18 +412,21 @@ try: # NEVER DO THIS!!!!!!!!
                                 """
                         elif type(powerup) == powerups.Water:
                             pass
+                        elif type(powerup) == powerups.Pringle:
+                            pass
 
                         powerup.effected = True
                     else:
                         if powerup.expires_at > 0 and powerup.expires_at <= bounces:
-                            print(f"{powerup} is ready to expire.")
+                            #print(f"{powerup} is ready to expire.")
                             if type(powerup) == powerups.Pineapple:
                                 for ball in active_balls:
                                     ball.speed = ball.speed - powerup.speed_increase
                             elif type(powerup) == powerups.Pickle:
                                 player_last_hit.lives -= 1
-                                print("PICKLE SHOULD HAVE EXPIRED!!!")
                             elif type(powerup) == powerups.Water:
+                                pass
+                            elif type(powerup) == powerups.Pringle:
                                 pass
 
                             powerup.expired = True
