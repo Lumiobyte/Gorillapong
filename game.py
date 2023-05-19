@@ -118,7 +118,9 @@ time_delta = 0
 #####
 
 ai = False # Whether the AI is enabled or not
+player1_ai = False # Can only be changed manually in the code. Causes blue player to be controlled by AI as well.
 aim_randomiser = 1 # Determines where the AI will attempt to land the ball on its paddles. 0 = one corner 1 = middle 2 = other corner
+repredict = True # Allow AI to make another prediction as to where the ball will land
 
 #####
 
@@ -156,6 +158,9 @@ def collision(rleft, rtop, width, height,   # rectangle definition
 def reset_ball():
     global active_balls # absolute python 2023 
     global spawned_powerups
+    global repredict
+
+    repredict = True
 
     delete_queue = []
     for powerup in spawned_powerups:
@@ -175,11 +180,15 @@ def reset_ball():
         active_balls[0].reverse_velocity_x()
         active_balls[0].reverse_velocity_y()
 
-def get_new_powerup():
+def get_new_powerup(spawn_index = None):
     global bounces
     global powerup_spawn_counter
 
-    spawn_rand = random.randint(4, 4)
+    if spawn_index:
+        spawn_rand = spawn_index
+    else:
+        spawn_rand = random.randint(1, 4)
+
     powerup_spawn_counter += 1
 
     if spawn_rand == 1:
@@ -211,6 +220,7 @@ try: # NEVER DO THIS!!!!!!!!
                         ai = ai_toggle
                         player2.paddle_horizontal.ai_paddle = ai_toggle
                         player2.paddle_vertical.ai_paddle = ai_toggle
+                        repredict = True
 
             if event.type == QUIT or active_screen == -1:
                 pygame.quit()
@@ -233,8 +243,16 @@ try: # NEVER DO THIS!!!!!!!!
                 if event.type == KEYDOWN:
                     if event.key == K_ESCAPE:
                         reset_ball()
+
                     if event.key == K_1:
-                        spawned_powerups.append(get_new_powerup())
+                        spawned_powerups.append(get_new_powerup(1))
+                    elif event.key == K_2:
+                        spawned_powerups.append(get_new_powerup(2))
+                    elif event.key == K_3:
+                        spawned_powerups.append(get_new_powerup(3))
+                    elif event.key == K_4:
+                        spawned_powerups.append(get_new_powerup(4))
+
                     if event.key == K_BACKSPACE:
                         active_screen = 0 # Back to main menu
                         #pygame.quit()
@@ -286,27 +304,69 @@ try: # NEVER DO THIS!!!!!!!!
             for i, ball in enumerate(active_balls):
 
                 if ai: # Ed Townsend
+
+                    if repredict:
+                        impact_pos = ball.future_position(None)
+
+                        # This method will result in the irrelevant paddle still jiggling slightly upon reprediction.
+                        # A check that stops aim randomiser from being applied to irrelevant paddles would fix it.
+                        if impact_pos.x == -1:
+                            impact_pos.x = player2.paddle_horizontal.paddle_pos.x
+                        if impact_pos.y == -1:
+                            impact_pos.y = player2.paddle_vertical.paddle_pos.y
+                        
+                        divisor = random.randint(21, 25) / 10 # Add some flavor to corner shots by hitting different parts of the paddle
+                        if aim_randomiser == 0:
+                            impact_pos.x -= player2.paddle_horizontal.paddle_rect.x / divisor
+                            impact_pos.y -= player2.paddle_vertical.paddle_rect.y / divisor
+                        elif aim_randomiser == 2:
+                            impact_pos.x += player2.paddle_horizontal.paddle_rect.x / divisor
+                            impact_pos.y += player2.paddle_vertical.paddle_rect.y / divisor
+
+                        repredict = False
+
+                    new_x = renderutils.lerp(player2.paddle_horizontal.paddle_pos.x, impact_pos.x, 8/FPS)
+                    new_y = renderutils.lerp(player2.paddle_vertical.paddle_pos.y, impact_pos.y, 8/FPS)
+
+                    if abs(player2.paddle_horizontal.paddle_pos.x - new_x) > player2.paddle_horizontal.ai_speed:
+                        if new_x > player2.paddle_horizontal.paddle_pos.x:
+                            new_x = player2.paddle_horizontal.paddle_pos.x + player2.paddle_horizontal.ai_speed
+                        else:
+                            new_x = player2.paddle_horizontal.paddle_pos.x - player2.paddle_horizontal.ai_speed
+
+                    if abs(player2.paddle_vertical.paddle_pos.y - new_y) > player2.paddle_vertical.ai_speed:
+                        if new_y > player2.paddle_vertical.paddle_pos.y:
+                            new_y = player2.paddle_vertical.paddle_pos.y + player2.paddle_vertical.ai_speed
+                        else:
+                            new_y = player2.paddle_vertical.paddle_pos.y - player2.paddle_vertical.ai_speed
+                            
+                    # Using paddle function allows paddle to manage its movement limits (prevents going off screen)
+                    player2.paddle_horizontal.move_to(new_x)
+                    player2.paddle_vertical.move_to(new_y)
+
+                # Inaccessible from the game UI, can only be activated by setting the variable in the code
+                if player1_ai: # Francis Sinclair
                     divisor = random.randint(21, 25) / 10 # Add some flavor to corner shots by hitting different parts of the paddle
                     if aim_randomiser == 0:
-                        impact_x = player2.paddle_horizontal.paddle_pos.x - player2.paddle_horizontal.paddle_rect.x / divisor
-                        impact_y = player2.paddle_vertical.paddle_pos.y - player2.paddle_vertical.paddle_rect.y / divisor
+                        impact_x = player1.paddle_horizontal.paddle_pos.x - player1.paddle_horizontal.paddle_rect.x / divisor
+                        impact_y = player1.paddle_vertical.paddle_pos.y - player1.paddle_vertical.paddle_rect.y / divisor
                     elif aim_randomiser == 1:
-                        impact_x = player2.paddle_horizontal.paddle_pos.x
-                        impact_y = player2.paddle_vertical.paddle_pos.y
+                        impact_x = player1.paddle_horizontal.paddle_pos.x
+                        impact_y = player1.paddle_vertical.paddle_pos.y
                     elif aim_randomiser == 2:
-                        impact_x = player2.paddle_horizontal.paddle_pos.x + player2.paddle_horizontal.paddle_rect.x / divisor
-                        impact_y = player2.paddle_vertical.paddle_pos.y + player2.paddle_vertical.paddle_rect.y / divisor
+                        impact_x = player1.paddle_horizontal.paddle_pos.x + player1.paddle_horizontal.paddle_rect.x / divisor
+                        impact_y = player1.paddle_vertical.paddle_pos.y + player1.paddle_vertical.paddle_rect.y / divisor
 
 
                     if impact_x > ball.position.x:
-                        player2.paddle_horizontal.move_negative()
+                        player1.paddle_horizontal.move_negative()
                     else:
-                        player2.paddle_horizontal.move_positive()
+                        player1.paddle_horizontal.move_positive()
                     
                     if impact_y > ball.position.y:
-                        player2.paddle_vertical.move_positive()
+                        player1.paddle_vertical.move_positive()
                     else:
-                        player2.paddle_vertical.move_negative()
+                        player1.paddle_vertical.move_negative()
 
                 ball.tick()
 
@@ -343,24 +403,28 @@ try: # NEVER DO THIS!!!!!!!!
                     bounces += 1
                     paddle_hit = player1.paddle_vertical
                     ball.pringle_last_hit = None
+                    repredict = True
                 elif paddle_collisions[1]:
                     ball.reverse_velocity_y(player2.paddle_horizontal.paddle_pos, player2.paddle_horizontal.paddle_id)
                     player_last_hit = player2
                     bounces += 1
                     paddle_hit = player2.paddle_horizontal
                     ball.pringle_last_hit = None
+                    repredict = True
                 elif paddle_collisions[2]:
                     ball.reverse_velocity_x(player2.paddle_vertical.paddle_pos, player2.paddle_vertical.paddle_id)
                     player_last_hit = player2
                     bounces += 1
                     paddle_hit = player2.paddle_vertical
                     ball.pringle_last_hit = None
+                    repredict = True
                 elif paddle_collisions[3]:
                     ball.reverse_velocity_y(player1.paddle_horizontal.paddle_pos, player1.paddle_horizontal.paddle_id)
                     player_last_hit = player1
                     bounces += 1
                     paddle_hit = player1.paddle_horizontal
                     ball.pringle_last_hit = None
+                    repredict = True
 
                 if ai:
                     if paddle_hit == player2.paddle_vertical or paddle_hit == player2.paddle_horizontal:
@@ -389,6 +453,7 @@ try: # NEVER DO THIS!!!!!!!!
                                 if collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *ball.position.tuple(), ball.radius):
                                     if ball.pringle_last_hit != powerup.powerup_id:
                                         ball.reverse_velocity_x()
+                                        repredict = True
                                         ball.pringle_last_hit = powerup.powerup_id
                         else:
                             powerup.collect(bounces, i)

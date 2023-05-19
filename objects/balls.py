@@ -73,15 +73,38 @@ class Ball:
         self.position.x += (self.velocity.x * self.speed)
         self.position.y += (self.velocity.y * self.speed)
     
-    def future_position(self, iterations):
+    def future_position(self, iterations = None): # Add ability to iterate until a certain x or y is reached.
         x = self.position.x
         y = self.position.y
 
-        for i in range(0, iterations + 1):
-            x += (self.velocity.x * self.speed)
-            y += (self.velocity.y * self.speed)
+        if iterations:
+            for i in range(0, iterations + 1):
+                x += (self.velocity.x * self.speed)
+                y += (self.velocity.y * self.speed)
 
-        return (x, y)
+            return (x, y)
+        
+        else:
+            iterate_x = True
+            iterate_y = True
+            while iterate_x and iterate_y: # (x > 40 and x < 1560) and (y > 40 and y < 860))
+                x += (self.velocity.x * self.speed)
+                y += (self.velocity.y * self.speed)
+
+                # Method to find out which intercept was reached first 
+                if (x < 40 or x > 1560):
+                    iterate_x = False
+                elif (y < 40 or y > 860):
+                    iterate_y = False
+
+            if abs(x - y) > 100: # If the point it reaches one intercept has it more than 100 pixels from the other intercept, the irrelevant paddle will not move
+                if iterate_x is False:
+                    x = -1 # If x limit is the first reached, the y (vertical) paddle will need to take the bounce, vice versa
+                elif iterate_y is False:
+                    y = -1
+
+            return Position(x, y)
+
 
     def render(self):
         pygame.draw.circle(self.screen, self.colour, self.position.tuple(), self.radius)

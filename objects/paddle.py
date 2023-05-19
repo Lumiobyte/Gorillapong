@@ -23,34 +23,49 @@ class Paddle():
             self.paddle_rect = Position(20, 190)
             self.paddle_pos = Position(*starting_pos)
 
-    def move_positive(self):
+    def move_positive(self, distance = None):
         if self.orientation == 0:
-            if self.ai_paddle:
+            if distance:
+                self.paddle_pos.x += distance
+            elif self.ai_paddle:
                 self.paddle_pos.x += self.ai_speed
             else:
                 self.paddle_pos.x += self.speed
         else:
-            if self.ai_paddle:
+            if distance:
+                self.paddle_pos.y -= distance
+            elif self.ai_paddle:
                 self.paddle_pos.y -= self.ai_speed
             else:
                 self.paddle_pos.y -= self.speed
 
         self.limit_pos()
 
-    def move_negative(self):
+    def move_negative(self, distance = None):
         if self.orientation == 0:
-            if self.ai_paddle:
+            if distance:
+                self.paddle_pos.x -= distance
+            elif self.ai_paddle:
                 self.paddle_pos.x -= self.ai_speed
             else:
                 self.paddle_pos.x -= self.speed
         else:
-            if self.ai_paddle:
+            if distance:
+                self.paddle_pos.y += distance
+            elif self.ai_paddle:
                 self.paddle_pos.y += self.ai_speed
             else:
                 self.paddle_pos.y += self.speed
 
         self.limit_pos()
 
+    def move_to(self, pos):
+        if self.orientation == 0:
+            self.paddle_pos.x = pos
+        else:
+            self.paddle_pos.y = pos
+
+        self.limit_pos()
 
     def limit_pos(self):
         if self.orientation == 0:
