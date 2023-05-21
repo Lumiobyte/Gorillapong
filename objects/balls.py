@@ -70,6 +70,9 @@ class Ball:
         self.paddle_last_hit = paddle_hit
 
     def tick(self):
+        if self.speed < 0: # Lazy fix for getting stuck in bugged water puddles
+            self.speed = 5.0
+            
         self.position.x += (self.velocity.x * self.speed)
         self.position.y += (self.velocity.y * self.speed)
     

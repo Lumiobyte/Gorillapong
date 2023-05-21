@@ -118,7 +118,7 @@ time_delta = 0
 #####
 
 ai = False # Whether the AI is enabled or not
-player1_ai = False # Can only be changed manually in the code. Causes blue player to be controlled by AI as well.
+player1_ai = True # Can only be changed manually in the code. Causes blue player to be controlled by AI as well.
 aim_randomiser = 1 # Determines where the AI will attempt to land the ball on its paddles. 0 = one corner 1 = middle 2 = other corner
 repredict = True # Allow AI to make another prediction as to where the ball will land
 
@@ -350,7 +350,7 @@ try: # NEVER DO THIS!!!!!!!!
 
                 # Inaccessible from the game UI, can only be activated by setting the variable in the code
                 if player1_ai: # Francis Sinclair
-                    divisor = random.randint(21, 25) / 10 # Add some flavor to corner shots by hitting different parts of the paddle
+                    divisor = random.randint(20, 25) / 10 # Add some flavor to corner shots by hitting different parts of the paddle (21, 25)
                     if aim_randomiser == 0:
                         impact_x = player1.paddle_horizontal.paddle_pos.x - player1.paddle_horizontal.paddle_rect.x / divisor
                         impact_y = player1.paddle_vertical.paddle_pos.y - player1.paddle_vertical.paddle_rect.y / divisor
