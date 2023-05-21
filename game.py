@@ -265,11 +265,15 @@ try: # NEVER DO THIS!!!!!!!!
             #### Death Check - return to menu. This will 100% break if they try to play again without restarting the program
 
             if player1.lives <= 0:
-                player_who_died = 1
-                active_screen = 0
+                #player_who_died = 1
+                #active_screen = 0
+                player1.lives = 3
+                player1.score = round(player1.score / 2)
             elif player2.lives <= 0:
-                player_who_died = 2
-                active_screen = 0
+                #player_who_died = 2
+                #active_screen = 0f
+                player2.lives = 3
+                player2.score = round(player2.score / 2)
 
             #### Input
 
@@ -431,6 +435,10 @@ try: # NEVER DO THIS!!!!!!!!
                         # It may be necessary to ensure that one of the human's paddles has been hit before allowing AI to make this choice again
                         aim_randomiser = random.randint(0, 2)
 
+                if player1_ai:
+                    if paddle_hit == player1.paddle_vertical or paddle_hit == player1.paddle_horizontal:
+                        aim_randomiser = random.randint(0, 2)
+
                 #### Powerup collisions
                 for powerup in spawned_powerups:
                     if collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *ball.position.tuple(), ball.radius):
@@ -531,9 +539,11 @@ try: # NEVER DO THIS!!!!!!!!
             score_text_1 = pygame.transform.rotate(score_font.render(str(player1.score), True, Colours.SCORE_GREY), -29)
             score_text_2 = pygame.transform.rotate(score_font.render(str(player2.score), True, Colours.SCORE_GREY), -32)
             score_text_2_rect = score_text_2.get_rect()
-            score_text_2_rect.bottomright = (1585, 865)
+            score_text_2_rect.bottomright = (1560, 850) # 1585, 865
 
-            WINDOW.blit(score_text_1, (15, 40))
+            renderutils.render_lives_ui(WINDOW, font, player1.lives, player2.lives)
+
+            WINDOW.blit(score_text_1, (25, 50)) # 15, 40
             WINDOW.blit(score_text_2, score_text_2_rect)
 
             render_queue += spawned_powerups
@@ -551,8 +561,8 @@ try: # NEVER DO THIS!!!!!!!!
             if ai:
                 WINDOW.blit(font.render(f"AIM: {aim_randomiser}", True, Colours.GREY), (850, 875))
 
-            WINDOW.blit(font.render("Blue Lives: " + str(player1.lives), True, Colours.GREY), (1000, 850))
-            WINDOW.blit(font.render("Orange Lives: " + str(player2.lives), True, Colours.GREY), (970, 875))
+            #WINDOW.blit(font.render("Blue Lives: " + str(player1.lives), True, Colours.GREY), (1000, 850))
+            #WINDOW.blit(font.render("Orange Lives: " + str(player2.lives), True, Colours.GREY), (970, 875))
             
 
         if database.get_resolution() != max_resolution:
