@@ -72,18 +72,23 @@ def switch_resolution(new_res):
 """
 
 #####
+
+from utils import audio
+sound = audio.Audio()
+
+#####
 screens = []
 
 import menus.main_menu as main_menu
-screens.append(main_menu.MainMenu(WINDOW, "Gorillapong"))
-screens.append(main_menu.MainMenu(WINDOW, "Settings"))
+screens.append(main_menu.MainMenu(WINDOW, "Gorillapong", sound))
+screens.append(main_menu.MainMenu(WINDOW, "Settings", sound))
 
 active_screen = 0
 render_queue = []
 font = pygame.font.SysFont(None, 32)
 score_font = pygame.font.SysFont(None, 128)
-
 #####
+
 from objects import paddle, balls
 
 @dataclass
@@ -118,7 +123,7 @@ time_delta = 0
 #####
 
 ai = False # Whether the AI is enabled or not
-player1_ai = True # Can only be changed manually in the code. Causes blue player to be controlled by AI as well.
+player1_ai = False # Can only be changed manually in the code. Causes blue player to be controlled by AI as well.
 aim_randomiser = 1 # Determines where the AI will attempt to land the ball on its paddles. 0 = one corner 1 = middle 2 = other corner
 repredict = True # Allow AI to make another prediction as to where the ball will land
 
@@ -222,6 +227,9 @@ try: # NEVER DO THIS!!!!!!!!
                         player2.paddle_vertical.ai_paddle = ai_toggle
                         repredict = True
 
+                        if active_screen == 3:
+                            sound.play_game_music()
+
             if event.type == QUIT or active_screen == -1:
                 pygame.quit()
                 sys.exit()
@@ -232,6 +240,8 @@ try: # NEVER DO THIS!!!!!!!!
                     screens[active_screen].render()
                     if player_who_died != 0:
                         WINDOW.blit(font.render(f"Player {player_who_died} died!", True, Colours.WHITE), (600, 300))
+                    sound.play_menu_music()
+
         else:
 
             last_frame_ticks = current_frame_ticks
@@ -269,11 +279,13 @@ try: # NEVER DO THIS!!!!!!!!
                 #active_screen = 0
                 player1.lives = 3
                 player1.score = round(player1.score / 2)
+                sound.lives_run_out() # Sound effect
             elif player2.lives <= 0:
                 #player_who_died = 2
                 #active_screen = 0f
                 player2.lives = 3
                 player2.score = round(player2.score / 2)
+                sound.lives_run_out() # Sound effect
 
             #### Input
 
@@ -403,6 +415,7 @@ try: # NEVER DO THIS!!!!!!!!
 
                 if paddle_collisions[0]:
                     ball.reverse_velocity_x(player1.paddle_vertical.paddle_pos, player1.paddle_vertical.paddle_id)
+                    sound.bounce() # Sound effect
                     player_last_hit = player1
                     bounces += 1
                     paddle_hit = player1.paddle_vertical
@@ -410,6 +423,7 @@ try: # NEVER DO THIS!!!!!!!!
                     repredict = True
                 elif paddle_collisions[1]:
                     ball.reverse_velocity_y(player2.paddle_horizontal.paddle_pos, player2.paddle_horizontal.paddle_id)
+                    sound.bounce() # Sound effect
                     player_last_hit = player2
                     bounces += 1
                     paddle_hit = player2.paddle_horizontal
@@ -417,6 +431,7 @@ try: # NEVER DO THIS!!!!!!!!
                     repredict = True
                 elif paddle_collisions[2]:
                     ball.reverse_velocity_x(player2.paddle_vertical.paddle_pos, player2.paddle_vertical.paddle_id)
+                    sound.bounce() # Sound effect
                     player_last_hit = player2
                     bounces += 1
                     paddle_hit = player2.paddle_vertical
@@ -424,6 +439,7 @@ try: # NEVER DO THIS!!!!!!!!
                     repredict = True
                 elif paddle_collisions[3]:
                     ball.reverse_velocity_y(player1.paddle_horizontal.paddle_pos, player1.paddle_horizontal.paddle_id)
+                    sound.bounce() # Sound effect
                     player_last_hit = player1
                     bounces += 1
                     paddle_hit = player1.paddle_horizontal
@@ -452,19 +468,22 @@ try: # NEVER DO THIS!!!!!!!!
                                     else:
                                         ball.speed = ball.speed + powerup.enter_puddle(ball.ball_id)
                                     ball.in_puddle = True
+                                    sound.water_enter() # Sound effect
                                 else:
                                     next_position = ball.future_position(1)
                                     if not collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *next_position, ball.radius) and ball.in_puddle:
                                         ball.speed = ball.speed + powerup.exit_puddle(ball.ball_id)
                                         ball.in_puddle = False
+                                        sound.water_exit() # Sound effect
                             if type(powerup) == powerups.Pringle and powerup.effected and not powerup.expired:
                                 if collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *ball.position.tuple(), ball.radius):
                                     if ball.pringle_last_hit != powerup.powerup_id:
                                         ball.reverse_velocity_x()
+                                        sound.hit_pringle() # Sound effect
                                         repredict = True
                                         ball.pringle_last_hit = powerup.powerup_id
                         else:
-                            powerup.collect(bounces, i)
+                            powerup.collect(bounces, i, sound)
 
             #### Powerup processing
             delete_queue = []
@@ -476,6 +495,7 @@ try: # NEVER DO THIS!!!!!!!!
                             #print("yellow")
                             for ball in active_balls:
                                 ball.speed = ball.speed + powerup.speed_increase
+                                sound.pineapple_pickup() # Sound effect
                         elif type(powerup) == powerups.Pickle:
                                 powerup.update_pos(active_balls[i].position)
 
@@ -495,7 +515,9 @@ try: # NEVER DO THIS!!!!!!!!
                             if type(powerup) == powerups.Pineapple:
                                 for ball in active_balls:
                                     ball.speed = ball.speed - powerup.speed_increase
+                                    sound.pineapple_expire() # Sound effect
                             elif type(powerup) == powerups.Pickle:
+                                sound.pickle_jar_break() # Sound effect
                                 player_last_hit.lives -= 1
                             elif type(powerup) == powerups.Water:
                                 pass
@@ -529,6 +551,7 @@ try: # NEVER DO THIS!!!!!!!!
                 if(player_last_hit):
                     scoring_player.score += 1
                     player_last_hit = None
+                    sound.score_point() # Sound effect
 
             ######## Graphics code ########
 

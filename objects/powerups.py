@@ -22,7 +22,7 @@ class Pineapple():
         self.expired = False
         self.expires_at = -1 # minus one 
 
-    def collect(self, bounces, ball_index):
+    def collect(self, bounces, ball_index, sound):
         self.collected = True
         self.expires_at = bounces + random.randrange(2, 5) #10
 
@@ -52,10 +52,12 @@ class Pickle():
 
         self.collided_ball_index = None
 
-    def collect(self, bounces, ball_index):
+    def collect(self, bounces, ball_index, sound):
         self.collected = True
-        self.expires_at = bounces + 3
+        self.expires_at = bounces + random.randrange(2, 8)
         self.collided_ball_index = ball_index
+
+        sound.pickle_jar_pickup() # Sound effect
 
     def update_pos(self, pos):
         self.position = pos
@@ -87,13 +89,15 @@ class Water():
         self.balls_in_puddle = []
         self.speed_change = -4
 
-    def collect(self, bounces, ball_index):
+    def collect(self, bounces, ball_index, sound):
         self.collected = True
         self.expires_at = bounces + 8
 
         self.col_rect = pygame.Rect(*self.position.tuple(), self.puddle_sprite.get_width(), self.puddle_sprite.get_height())
         self.position.x -= self.col_rect.width / 2
         self.position.y -= self.col_rect.height / 2
+
+        sound.water_pickup() # Sound effect
 
     def enter_puddle(self, ball_id):
         self.balls_in_puddle.append(ball_id)
@@ -136,7 +140,7 @@ class Pringle():
         self.expired = False
         self.expires_at = -1
 
-    def collect(self, bounces, ball_index):
+    def collect(self, bounces, ball_index, sound):
         self.collected = True
         self.expires_at = bounces + 10
 

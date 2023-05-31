@@ -8,10 +8,12 @@ from utils.colours import Colours
 
 class MainMenu():
 
-    def __init__(self, window, title):
+    def __init__(self, window, title, sound):
         self.screen = window
         self.screen_title = title
         self.font = pygame.font.SysFont(None, 48)
+
+        self.sound = sound
 
         self.last_pos = (50, 50) # debug feature
 
@@ -47,6 +49,7 @@ class MainMenu():
                 btn.hover()
 
                 if clicked:
+                    self.sound.button_click()
                     if action == 1000:
                         database.set_resolution((1600, 900))
                         force_restart.force_restart("Resolution has been updated to 1600x900")
