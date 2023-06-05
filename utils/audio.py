@@ -1,5 +1,7 @@
 import pygame
 
+from utils import database
+
 class Audio():
     def __init__(self):
         pygame.mixer.init(channels = 8)
@@ -8,7 +10,7 @@ class Audio():
 
         self.pop = pygame.mixer.Sound(self.filepath + 'pop.mp3')
         self.score = pygame.mixer.Sound(self.filepath + 'score.mp3')
-        self.loss = pygame.mixer.Sound(self.filepath + 'bad-boosted.wav')
+        self.loss = pygame.mixer.Sound(self.filepath + 'bad.wav')
 
         self.crunch = pygame.mixer.Sound(self.filepath + 'crunch.wav')
         self.pickle_pickup = pygame.mixer.Sound(self.filepath + 'glassclink.wav')
@@ -22,62 +24,90 @@ class Audio():
         self.hover = pygame.mixer.Sound(self.filepath + 'hover.wav')
         self.click = pygame.mixer.Sound(self.filepath + 'select.mp3')
 
+        self.menu_music_vol = 1.5 # database.get * 1.5
+        self.game_music_vol = 0.3 # database.get * 0.5
+
+        data = database.get_music_sound()
+        self.music_enabled = data[0]
+        self.sound_enabled = data[1]
 
         self.menu_music_playing = False
         self.game_music_playing = False
 
+    def reinit(self):
+        pygame.mixer.music.stop()
+        self.__init__()
+        self.play_menu_music()
+
     def play_menu_music(self):
-        if not self.menu_music_playing:
-            pygame.mixer.music.set_volume(1.5)
+        pygame.mixer.music.stop()
+
+        if not self.menu_music_playing and self.music_enabled:
+            pygame.mixer.music.set_volume(self.menu_music_vol)
             pygame.mixer.music.load(self.filepath + 'mainmenu_music_vapor.wav')
             pygame.mixer.music.play(-1)
             self.menu_music_playing = True
             self.game_music_playing = False
 
     def play_game_music(self):
-        if not self.game_music_playing:
-            pygame.mixer.music.set_volume(0.3)
+        pygame.mixer.music.stop()
+
+        if not self.game_music_playing and self.music_enabled:
+            pygame.mixer.music.set_volume(self.game_music_vol)
             pygame.mixer.music.load(self.filepath + 'gameplay_music_loop_vapor.wav')
             pygame.mixer.music.play(-1)
             self.game_music_playing = True
             self.menu_music_playing = False
         
     def bounce(self):
-        self.pop.play()
+        if self.sound_enabled:
+            self.pop.play()
 
     def hit_pringle(self):
-        self.crunch.play()
+        if self.sound_enabled:
+            self.crunch.play()
 
     def pickle_jar_pickup(self):
-        self.pickle_pickup.play()
+        if self.sound_enabled:
+            self.pickle_pickup.play()
     
     def pickle_jar_break(self):
-        self.pickle_smash.play()
+        if self.sound_enabled:
+            self.pickle_smash.play()
 
     def water_pickup(self):
-        #self.water_pour.play()
-        pass
+        if self.sound_enabled:
+            #self.water_pour.play()
+            pass
 
     def water_enter(self):
-        self.water_entry_splash.play()
+        if self.sound_enabled:
+            self.water_entry_splash.play()
 
     def water_exit(self):
-        self.water_exit_splash.play()
+        if self.sound_enabled:
+            self.water_exit_splash.play()
 
     def button_hover(self):
-        self.hover.play()
+        if self.sound_enabled:
+            self.hover.play()
 
     def button_click(self):
-        self.click.play()
+        if self.sound_enabled:
+            self.click.play()
 
     def score_point(self):
-        self.score.play()
+        if self.sound_enabled:
+            self.score.play()
 
     def pineapple_pickup(self):
-        self.swish_up.play()
+        if self.sound_enabled:
+            self.swish_up.play()
     
     def pineapple_expire(self):
-        self.swish_down.play()
+        if self.sound_enabled:
+            self.swish_down.play()
 
     def lives_run_out(self):
-        self.loss.play()
+        if self.sound_enabled:
+            self.loss.play()

@@ -123,7 +123,7 @@ time_delta = 0
 #####
 
 ai = False # Whether the AI is enabled or not
-player1_ai = False # Can only be changed manually in the code. Causes blue player to be controlled by AI as well.
+player1_ai = True # Can only be changed manually in the code. Causes blue player to be controlled by AI as well.
 aim_randomiser = 1 # Determines where the AI will attempt to land the ball on its paddles. 0 = one corner 1 = middle 2 = other corner
 repredict = True # Allow AI to make another prediction as to where the ball will land
 
@@ -227,6 +227,13 @@ try: # NEVER DO THIS!!!!!!!!
                         player2.paddle_vertical.ai_paddle = ai_toggle
                         repredict = True
 
+                        if active_screen == 5:
+                            player1_ai = True
+                            active_screen = 3
+                        else:
+                            player1_ai = False
+                            pass
+
                         if active_screen == 3:
                             sound.play_game_music()
 
@@ -240,6 +247,7 @@ try: # NEVER DO THIS!!!!!!!!
                     screens[active_screen].render()
                     if player_who_died != 0:
                         WINDOW.blit(font.render(f"Player {player_who_died} died!", True, Colours.WHITE), (600, 300))
+
                     sound.play_menu_music()
 
         else:
@@ -543,7 +551,7 @@ try: # NEVER DO THIS!!!!!!!!
                 
                 spawned_powerups.append(get_new_powerup())
 
-                next_powerup_bounces += random.randrange(9, 21)
+                next_powerup_bounces += random.randrange(6, 15) # (9, 21)
 
             #### Respawn check
             if out_of_bounds:

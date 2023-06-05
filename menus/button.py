@@ -5,7 +5,7 @@ from utils.colours import Colours
 
 # Add button highlights on hover
 class Button():
-    def __init__(self, window, colour, hover_colour, center, w, h, title, action):
+    def __init__(self, window, colour, hover_colour, center, w, h, title, action, support_hover = True):
         self.screen = window
 
         self.colour = colour
@@ -16,10 +16,13 @@ class Button():
         self.button_rect = pygame.Rect(center[0] - (w / 2), center[1] - (h / 2), w, h)
         self.button_action = action
 
+        self.support_hover = support_hover
+
         self.font = pygame.font.SysFont(None, 48)
 
     def hover(self):
-        self.hovered = True
+        if self.support_hover:
+            self.hovered = True
 
     def check_collision(self, pos):
         return self.button_rect.collidepoint(pos), self.button_action

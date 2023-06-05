@@ -17,10 +17,21 @@ class MainMenu():
 
         self.last_pos = (50, 50) # debug feature
 
+        data = database.get_music_sound()
+        if data[0] == True:
+            music_btn_colour = Colours.ENABLED_GREEN
+        else:
+            music_btn_colour = Colours.LIGHT_PASTEL_RED
+        if data[1] == True:
+            sound_btn_colour = Colours.ENABLED_GREEN
+        else:
+            sound_btn_colour = Colours.LIGHT_PASTEL_RED
+
         if self.screen_title == "Settings":
             self.buttons = [
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, -70), 240, 100, "Placeholder", 1),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 70), 240, 100, "Placeholder", 1),
+                button.Button(self.screen, music_btn_colour, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(125, -70), 240, 100, "MUSIC", 1002, False),
+                button.Button(self.screen, sound_btn_colour, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-125, -70), 240, 100, "SOUND", 1003, False),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 70), 240, 100, "Adjust Volume", 1),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 210), 240, 100, "Back", 0),
 
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-110, -180), 200, 60, "1600x900", 1000),
@@ -28,8 +39,9 @@ class MainMenu():
             ]
         else:
             self.buttons = [
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-150, -70), 240, 100, "Play with AI", 4),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(150, -70), 240, 100, "Local Multiplayer", 3),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-300, -70), 240, 100, "AI Showdown", 5),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, -70), 240, 100, "Play with AI", 4),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(300, -70), 240, 100, "Local Multiplayer", 3),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 70), 240, 100, "Settings", 1),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 210), 240, 100, "Exit", -1),
             ]
@@ -49,16 +61,32 @@ class MainMenu():
                 btn.hover()
 
                 if clicked:
-                    self.sound.button_click()
+                    self.sound.button_click() # Sound effect
                     if action == 1000:
                         database.set_resolution((1600, 900))
                         force_restart.force_restart("Resolution has been updated to 1600x900")
                     elif action == 1001:
                         database.set_resolution((1280, 720))
                         force_restart.force_restart("Resolution has been updated to 1280x720")
+                    elif action == 1002:
+                        value = database.toggle_music_sound("music")
+                        self.sound.reinit()
+                        if value == True:
+                            btn.colour = Colours.ENABLED_GREEN
+                        else:
+                            btn.colour = Colours.LIGHT_PASTEL_RED
+                    elif action == 1003:
+                        value = database.toggle_music_sound("sound")
+                        self.sound.reinit()
+                        if value == True:
+                            btn.colour = Colours.ENABLED_GREEN
+                        else:
+                            btn.colour = Colours.LIGHT_PASTEL_RED
                     else:
                         if action == 4:
                             return 3, True
+                        elif action == 5:
+                            return 5, True
                         return action, False
                     
         if clicked: # This fix kills me. The entire UI needs a rewrite

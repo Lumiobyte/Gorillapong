@@ -21,4 +21,22 @@ def set_resolution(new_res):
 
     with open(filepath, mode = "w") as file:
         json.dump(data, file)
+
+def get_music_sound():
+    with open(filepath) as file:
+        data = json.load(file)
+        return (data["music"], data["sound"])
     
+def toggle_music_sound(which):
+    with open(filepath, mode = "r") as file:
+        data = json.load(file)
+        
+    if data[which] == True:
+        data[which] = False
+    else:
+        data[which] = True
+
+    with open(filepath, mode = "w") as file:
+        json.dump(data, file)
+
+    return data[which]

@@ -7,6 +7,9 @@ class Colours():
 
     LIGHT_PASTEL_GREEN = (191, 255, 189) # button hover colour
 
+    ENABLED_GREEN = (72, 240, 46) # Enabled setting
+    LIGHT_PASTEL_RED = (240, 46, 46) # Disabled setting
+
     PRINGLE_WALL = (255, 214, 51)
 
     PURPLE = (137, 52, 235)
