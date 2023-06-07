@@ -13,6 +13,8 @@ class Button():
         self.hovered = False
         self.title = title
         self.center = center
+        self.w = w
+        self.h = h
         self.button_rect = pygame.Rect(center[0] - (w / 2), center[1] - (h / 2), w, h)
         self.button_action = action
 
@@ -26,6 +28,10 @@ class Button():
 
     def check_collision(self, pos):
         return self.button_rect.collidepoint(pos), self.button_action
+    
+    def move(self, pos):
+        self.center = pos
+        self.button_rect = pygame.Rect(self.center[0] - (self.w / 2), self.center[1] - (self.h / 2), self.w, self.h)
     
     def render(self):
         if self.hovered:

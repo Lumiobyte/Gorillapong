@@ -212,8 +212,7 @@ try: # NEVER DO THIS!!!!!!!!
             for event in pygame.event.get():
                 if event.type == KEYDOWN:
                     pass
-
-                if event.type == MOUSEBUTTONDOWN:
+                elif event.type == MOUSEBUTTONDOWN:
                     result, ai_toggle = screens[active_screen].process_position(event.pos, True)
                     if result != None:
                         active_screen = result
@@ -236,6 +235,8 @@ try: # NEVER DO THIS!!!!!!!!
 
                         if active_screen == 3:
                             sound.play_game_music()
+                elif pygame.mouse.get_pressed()[0]:
+                    screens[active_screen].process_hold(event.pos)
 
             if event.type == QUIT or active_screen == -1:
                 pygame.quit()

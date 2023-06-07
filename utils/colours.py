@@ -6,6 +6,7 @@ class Colours():
     PLAYER_GREEN = (138, 227, 221) #(143, 227, 138)
 
     LIGHT_PASTEL_GREEN = (191, 255, 189) # button hover colour
+    DARK_GREEN = (61, 102, 59) # slider button hover colour
 
     ENABLED_GREEN = (72, 240, 46) # Enabled setting
     LIGHT_PASTEL_RED = (240, 46, 46) # Disabled setting
