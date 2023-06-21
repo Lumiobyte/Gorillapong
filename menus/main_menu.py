@@ -45,6 +45,7 @@ class MainMenu():
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(300, -70), 240, 100, "Local Multiplayer", 3),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 70), 240, 100, "Settings", 1),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 210), 240, 100, "Exit", -1),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(700, 400), 180, 80, "Credits", 6)
             ]
 
         self.sound_vol = 1
@@ -64,6 +65,8 @@ class MainMenu():
         ]
 
         self.__position_slider_buttons()
+
+        self.version_text = self.font.render("v0.12", True, Colours.WHITE)
 
         self.slider_texts = [
             self.small_font.render("Music Volume", True, Colours.WHITE),
@@ -190,6 +193,7 @@ class MainMenu():
 
             self.back_button.render()
         else:
+            self.screen.blit(self.version_text, (20, 850))
             text = self.font.render(self.screen_title, True, Colours.WHITE)
             self.screen.blit(text, text.get_rect(center = self.__calc_position(0, -350)))
 

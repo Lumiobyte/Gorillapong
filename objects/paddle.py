@@ -4,11 +4,11 @@ from pygame.locals import *
 from utils.position import Position
 
 class Paddle():
-    def __init__(self, screen, orientation, starting_pos, colour, paddle_id):
+    def __init__(self, screen, orientation, starting_pos, image, paddle_id):
 
         self.screen = screen
         self.orientation = orientation
-        self.colour = colour
+        #self.colour = colour
 
         self.paddle_id = paddle_id
 
@@ -16,7 +16,10 @@ class Paddle():
         self.ai_speed = 10 #4
         self.ai_paddle = False
 
+        self.sprite = pygame.image.load(f'image/{image}.png')
+
         if self.orientation == 0:
+            self.sprite = pygame.transform.rotate(self.sprite, 90)
             self.paddle_rect = Position(190, 20)
             self.paddle_pos = Position(*starting_pos)
         else:
@@ -80,7 +83,10 @@ class Paddle():
                 self.paddle_pos.y = 100
 
     def render(self):
-        rect = pygame.draw.rect(self.screen, self.colour, pygame.Rect(*self.get_left_top(), self.paddle_rect.x, self.paddle_rect.y))
+        #rect = pygame.draw.rect(self.screen, self.colour, pygame.Rect(*self.get_left_top(), self.paddle_rect.x, self.paddle_rect.y))
+        #rect = pygame.draw.rect(self.screen, self.colour, pygame.Rect(*self.get_left_top(), self.paddle_rect.x, self.paddle_rect.y))
+
+        self.screen.blit(self.sprite, self.get_left_top())
 
         # draw bounding points, same as how collisions function calculates them
         """
@@ -90,4 +96,4 @@ class Paddle():
         """
         
     def get_left_top(self):
-        return (self.paddle_pos.x - self.paddle_rect.x / 2, self.paddle_pos.y - self.paddle_rect.y / 2,)
+        return (self.paddle_pos.x - self.paddle_rect.x / 2, self.paddle_pos.y - self.paddle_rect.y / 2)

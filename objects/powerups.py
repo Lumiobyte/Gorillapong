@@ -153,3 +153,27 @@ class Pringle():
             else:
                 self.screen.blit(self.sprite, self.position.tuple())
 
+class Computer():
+    def __init__(self, screen):
+        self.screen = screen
+
+        self.position = Position(random.randrange(400, 1200), random.randrange(200, 600))
+        self.sprite = pygame.image.load('image/calc.png')
+        self.sprite = pygame.transform.scale(self.sprite, (self.sprite.get_width() / 14, self.sprite.get_height() / 14))
+
+        self.col_rect = pygame.Rect(*self.position.tuple(), self.sprite.get_width(), self.sprite.get_height())
+
+        self.collected = False
+        self.effected = False
+        self.expired = False
+        self.expires_at = -1
+
+    def collect(self, bounces, ball_index, sound):
+        self.collected = True
+        self.expires_at = bounces + 10
+
+        sound.computer_pickup() # Sound effect
+
+    def render(self):
+        if not self.collected:
+            self.screen.blit(self.sprite, self.position.tuple())

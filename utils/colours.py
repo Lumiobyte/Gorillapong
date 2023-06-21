@@ -10,8 +10,10 @@ class Colours():
 
     ENABLED_GREEN = (72, 240, 46) # Enabled setting
     LIGHT_PASTEL_RED = (240, 46, 46) # Disabled setting
+    LIGHT_RED = (255, 110, 84)
+    ORANGEY_YELLOW = (255, 209, 84)
 
-    PRINGLE_WALL = (255, 214, 51)
+    PRINGLE_WALL = (212, 68, 68) #(255, 214, 51)
 
     PURPLE = (137, 52, 235)
 

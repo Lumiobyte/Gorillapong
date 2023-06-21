@@ -17,6 +17,8 @@ class Ball:
         self.bounce_modifier = bounce_modifier
         self.colour = colour
 
+        self.sprite = pygame.image.load('image/gorilla.png')
+
         self.paddle_last_hit = None
         self.in_puddle = False
         self.pringle_last_hit = None
@@ -110,7 +112,9 @@ class Ball:
 
 
     def render(self):
-        pygame.draw.circle(self.screen, self.colour, self.position.tuple(), self.radius)
+        #pygame.draw.circle(self.screen, self.colour, self.position.tuple(), self.radius)
+        self.screen.blit(self.sprite, (self.position.tuple()[0] - 15, self.position.tuple()[1] - 15))
 
         if self.debug:
             pygame.draw.circle(self.screen, (255, 255, 255), (self.debug_dot[0], self.debug_dot[1]), radius=5)
+            pygame.draw.circle(self.screen, (255, 255, 255), self.position.tuple(), radius = 5)

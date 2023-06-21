@@ -42,6 +42,12 @@ class Audio():
         self.swish_up.set_volume(self.sound_vol)
         self.swish_down = pygame.mixer.Sound(self.filepath + 'swishdown.flac')
         self.swish_down.set_volume(self.sound_vol)
+        self.computer_on = pygame.mixer.Sound(self.filepath + 'computeractivate.mp3')
+        self.computer_on.set_volume(self.sound_vol)
+        self.computer_off = pygame.mixer.Sound(self.filepath + 'computerfail.mp3')
+        self.computer_off.set_volume(self.sound_vol)
+        self.paint_splash = pygame.mixer.Sound(self.filepath + 'paint.wav')
+        self.paint_splash.set_volume(self.sound_vol)
 
         self.hover = pygame.mixer.Sound(self.filepath + 'hover.wav')
         self.hover.set_volume(self.sound_vol)
@@ -123,3 +129,7 @@ class Audio():
     def lives_run_out(self):
         if self.sound_enabled:
             self.loss.play()
+
+    def computer_pickup(self):
+        if self.sound_enabled:
+            self.computer_on.play()
