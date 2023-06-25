@@ -12,6 +12,7 @@ class Ball:
         self.position = Position(800, 450)
         self.radius = radius
         self.velocity = Position(-1, 1)
+        self.default_speed = speed / 2
         self.speed = speed / 2
         self.bounced = False
         self.bounce_modifier = bounce_modifier

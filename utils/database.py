@@ -1,3 +1,4 @@
+import pygame
 import json
 
 filepath = "./save.json"
@@ -11,7 +12,10 @@ def get_max_resolution(): # in case of error, 1600x900
 def get_resolution(): # in case of error, 1600x900
     with open(filepath) as file:
         data = json.load(file)
-        return (data["resolution"][0], data["resolution"][1])
+        if data["resolution"][0] == 0:
+            return pygame.FULLSCREEN 
+        else:
+            return (data["resolution"][0], data["resolution"][1])
 
 def set_resolution(new_res):
     with open(filepath, mode = "r") as file:

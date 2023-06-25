@@ -53,7 +53,10 @@ if database.get_resolution() == max_resolution:
     SCREEN = None
 else:
     WINDOW = pygame.Surface(max_resolution)
-    SCREEN = pygame.display.set_mode(database.get_resolution())
+    if database.get_resolution() == pygame.FULLSCREEN:
+        SCREEN = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    else:
+        SCREEN = pygame.display.set_mode(database.get_resolution())
 
 pygame.display.set_caption("Gorilla Pong")
 
@@ -80,8 +83,8 @@ sound = audio.Audio()
 screens = []
 
 import menus.main_menu as main_menu
-screens.append(main_menu.MainMenu(WINDOW, "Gorillapong", sound))
-screens.append(main_menu.MainMenu(WINDOW, "Settings", sound))
+screens.append(main_menu.MainMenu(WINDOW, SCREEN, "Gorillapong", sound))
+screens.append(main_menu.MainMenu(WINDOW, SCREEN, "Settings", sound))
 
 paused = False
 
@@ -165,16 +168,13 @@ def collision(rleft, rtop, width, height,   # rectangle definition
 
     return False  # no collision detected
 
-def reset_ball():
-    global active_balls # absolute python 2023 
+def clear_powerups(clear_all):
+    global active_balls 
     global spawned_powerups
-    global repredict
-
-    repredict = True
 
     delete_queue = []
     for powerup in spawned_powerups:
-        if powerup.collected:
+        if powerup.collected or clear_all:
             if type(powerup) == powerups.Computer and powerup.expired:
                 delete_queue.append(powerup) # Only append calculators if they're already expired
             else:
@@ -182,6 +182,20 @@ def reset_ball():
 
     for obj in delete_queue:
         spawned_powerups.remove(obj)
+
+    if clear_all:
+        active_balls[0].speed = active_balls[0].default_speed
+        active_balls[0].in_puddle = False
+        active_balls[0].pringle_last_hit = None
+
+def reset_ball():
+    global active_balls # absolute python 2023 
+    global spawned_powerups
+    global repredict
+
+    repredict = True
+
+    clear_powerups(False)
 
     active_balls = [balls.Ball(WINDOW, 15, 5, 0.1, Colours.BALL, 0)] # 5
     rand = random.randint(0, 3)
@@ -231,7 +245,6 @@ def perfect_ai(player):
         impact_x = player.paddle_horizontal.paddle_pos.x + player.paddle_horizontal.paddle_rect.x / divisor
         impact_y = player.paddle_vertical.paddle_pos.y + player.paddle_vertical.paddle_rect.y / divisor
 
-
     if impact_x > ball.position.x:
         player.paddle_horizontal.move_negative()
     else:
@@ -246,7 +259,10 @@ def perfect_ai(player):
 def map_mouse_position(pos):
     #output_start + ((output_end - output_start) / (input_end - input_start)) * (input - input_start)
 
-    res = database.get_resolution()
+    if SCREEN:
+        res = SCREEN.get_size()
+    else:
+        res = WINDOW.get_size()
 
     x_map = ((1600) / (res[0]) * (pos[0]))
     y_map = ((900) / (res[1]) * (pos[1]))
@@ -257,52 +273,69 @@ try: # NEVER DO THIS!!!!!!!!
     looping = True
     while looping:
         if active_screen != 3:
-            for event in pygame.event.get():
-                if event.type == KEYDOWN:
-                    pass
-                elif event.type == MOUSEBUTTONDOWN:
-                    result, ai_toggle = screens[active_screen].process_position(event.pos, True)
-                    if result != None:
-                        active_screen = result
 
-                        player1.lives = 3
-                        player2.lives = 3
-                        spawned_powerups = []
+            if active_screen == 6:
+                clicked = False
+                for event in pygame.event.get():
+                    if event.type == MOUSEBUTTONDOWN:
+                        clicked = True
+                    if event.type == QUIT:
+                        pygame.quit()
+                        sys.exit()
 
-                        ai = ai_toggle
-                        if ai:
-                            mode = 1
-                        else:
-                            mode = 2
-                        player2.paddle_horizontal.ai_paddle = ai_toggle
-                        player2.paddle_vertical.ai_paddle = ai_toggle
-                        repredict = True
+                WINDOW.fill(Colours.BG_GREY)
+                result = screens[0].process_render_credits_screen(pygame.mouse.get_pos(), clicked)
 
-                        if active_screen == 5:
-                            player1_ai = True
-                            active_screen = 3
-                            mode = 0
-                        else:
-                            player1_ai = False
-                            pass
-
-                        if active_screen == 3:
-                            sound.play_game_music()
-                elif pygame.mouse.get_pressed()[0]:
-                    screens[active_screen].process_hold(event.pos)
-
-            if event.type == QUIT or active_screen == -1:
-                pygame.quit()
-                sys.exit()
+                if result is not None:
+                    active_screen = result
             else:
-                if active_screen != 3:
-                    screens[active_screen].process_position(pygame.mouse.get_pos())
-                    WINDOW.fill(BACKGROUND)
-                    screens[active_screen].render()
-                    if player_who_died != 0:
-                        WINDOW.blit(font.render(f"Player {player_who_died} died!", True, Colours.WHITE), (600, 300))
+                for event in pygame.event.get():
 
-                    sound.play_menu_music()
+                    if event.type == KEYDOWN:
+                        pass
+                    elif event.type == MOUSEBUTTONDOWN:
+                        result, ai_toggle = screens[active_screen].process_position(event.pos, True)
+                        if result != None:
+                            active_screen = result
+
+                            player1.lives = 3
+                            player2.lives = 3
+                            spawned_powerups = []
+
+                            ai = ai_toggle
+                            if ai:
+                                mode = 1
+                            else:
+                                mode = 2
+                            player2.paddle_horizontal.ai_paddle = ai_toggle
+                            player2.paddle_vertical.ai_paddle = ai_toggle
+                            repredict = True
+
+                            if active_screen == 5:
+                                player1_ai = True
+                                active_screen = 3
+                                mode = 0
+                            else:
+                                player1_ai = False
+                                pass
+
+                            if active_screen == 3:
+                                sound.play_game_music()
+                    elif pygame.mouse.get_pressed()[0]:
+                        screens[active_screen].process_hold(pygame.mouse.get_pos())
+
+                if event.type == QUIT or active_screen == -1:
+                    pygame.quit()
+                    sys.exit()
+                else:
+                    if active_screen != 3 and active_screen != 6:
+                        screens[active_screen].process_position(pygame.mouse.get_pos())
+                        WINDOW.fill(BACKGROUND)
+                        screens[active_screen].render()
+                        if player_who_died != 0:
+                            WINDOW.blit(font.render(f"Player {player_who_died} died!", True, Colours.WHITE), (600, 300))
+
+                        sound.play_menu_music()
 
         else:
             last_frame_ticks = current_frame_ticks
@@ -348,10 +381,12 @@ try: # NEVER DO THIS!!!!!!!!
                 button1 = pygame.Rect(430, 460, 220, 85)
                 button2 = pygame.Rect(930, 460, 220, 85)
                 button3 = pygame.Rect(682, 460, 220 , 85)
+                button4 = pygame.Rect(682, 360, 220, 85)
 
                 if(button1.collidepoint(map_mouse_position(pygame.mouse.get_pos()))):
                     pygame.draw.rect(WINDOW, Colours.LIGHT_RED, button1)
                     if pygame.mouse.get_pressed()[0]:
+                        sound.button_click() # Sound effect
                         paused = False
                         active_screen = 0
                 else:
@@ -360,6 +395,7 @@ try: # NEVER DO THIS!!!!!!!!
                 if(button2.collidepoint(map_mouse_position(pygame.mouse.get_pos()))):
                     pygame.draw.rect(WINDOW, Colours.LIGHT_PASTEL_GREEN, button2)
                     if pygame.mouse.get_pressed()[0]:
+                        sound.button_click() # Sound effect
                         paused = False
                 else:               
                     pygame.draw.rect(WINDOW, Colours.WHITE, button2)
@@ -367,13 +403,24 @@ try: # NEVER DO THIS!!!!!!!!
                 if(button3.collidepoint(map_mouse_position(pygame.mouse.get_pos()))):
                     pygame.draw.rect(WINDOW, Colours.ORANGEY_YELLOW, button3)
                     if pygame.mouse.get_pressed()[0]:
+                        sound.button_click() # Sound effect
                         reset_ball()
                 else:               
                         pygame.draw.rect(WINDOW, Colours.WHITE, button3)
 
+                if(button4.collidepoint(map_mouse_position(pygame.mouse.get_pos()))):
+                    pygame.draw.rect(WINDOW, Colours.ORANGEY_YELLOW, button4)
+                    if pygame.mouse.get_pressed()[0]:
+                        sound.button_click() # Sound effect
+                        clear_powerups(True)
+                else:               
+                        pygame.draw.rect(WINDOW, Colours.WHITE, button4)
+
+
                 WINDOW.blit(font.render("Main Menu", True, Colours.BLACK), (button1.left + 50, button1.top + 33))
                 WINDOW.blit(font.render("Resume Game", True, Colours.BLACK), (button2.left + 35, button2.top + 33))
                 WINDOW.blit(font.render("Reset Ball", True, Colours.BLACK), (button3.left + 55, button3.top + 33))
+                WINDOW.blit(font.render("Clear Powerups", True, Colours.BLACK), (button4.left + 22, button4.top + 33))
 
                 pygame.draw.rect(WINDOW, Colours.BG_GREY, pygame.Rect(0, 870, 176, 30))
                 WINDOW.blit(font.render("FPS: {} / {}".format(round(clock.get_fps(), 1), time_delta), True, Colours.GREY), (5, 875))
@@ -537,14 +584,18 @@ try: # NEVER DO THIS!!!!!!!!
                         ball.pringle_last_hit = None
                         repredict = True
 
-                    if ai:
-                        if paddle_hit == player2.paddle_vertical or paddle_hit == player2.paddle_horizontal:
-                            # It may be necessary to ensure that one of the human's paddles has been hit before allowing AI to make this choice again
-                            aim_randomiser = random.randint(0, 2)
+                    if temp_ai_player != None and paddle_hit:
+                        aim_randomiser = random.randint(0, 2)
+                    else:
+                        if ai:
+                            if paddle_hit == player2.paddle_vertical or paddle_hit == player2.paddle_horizontal:
+                                # It may be necessary to ensure that one of the human's paddles has been hit before allowing AI to make this choice again
+                                aim_randomiser = random.randint(0, 2)
 
-                    if player1_ai:
-                        if paddle_hit == player1.paddle_vertical or paddle_hit == player1.paddle_horizontal:
-                            aim_randomiser = random.randint(0, 2)
+                        if player1_ai:
+                            if paddle_hit == player1.paddle_vertical or paddle_hit == player1.paddle_horizontal:
+                                aim_randomiser = random.randint(0, 2)
+
 
                     #### Powerup collisions
                     for powerup in spawned_powerups:
@@ -599,6 +650,8 @@ try: # NEVER DO THIS!!!!!!!!
                                     """
                             elif type(powerup) == powerups.Computer:
                                 temp_ai_player = player_last_hit
+                                player_last_hit.paddle_horizontal.swap_sprites(True)
+                                player_last_hit.paddle_vertical.swap_sprites(True)
 
                             powerup.effected = True
                         else:
@@ -612,6 +665,8 @@ try: # NEVER DO THIS!!!!!!!!
                                     sound.pickle_jar_break() # Sound effect
                                     player_last_hit.lives -= 1
                                 elif type(powerup) == powerups.Computer:
+                                    temp_ai_player.paddle_horizontal.swap_sprites()
+                                    temp_ai_player.paddle_vertical.swap_sprites()
                                     temp_ai_player = None
                                     print("YAAAAAAAAA")
     
@@ -681,8 +736,8 @@ try: # NEVER DO THIS!!!!!!!!
                 
 
         if database.get_resolution() != max_resolution:
-            WINDOW_downscaled = pygame.transform.scale(WINDOW, database.get_resolution())
-            SCREEN.blit(WINDOW_downscaled, (0, 0))
+            WINDOW_scaled = pygame.transform.scale(WINDOW, SCREEN.get_size())
+            SCREEN.blit(WINDOW_scaled, (0, 0))
         else:
             # Shouldn't need to do anything here if the resolution switching method works out 
             #SCREEN.blit(WINDOW, (0, 0))

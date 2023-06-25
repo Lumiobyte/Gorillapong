@@ -8,9 +8,10 @@ from utils.colours import Colours
 
 class MainMenu():
 
-    def __init__(self, window, title, sound):
+    def __init__(self, window, display_screen, title, sound):
         self.screen = window
         self.screen_title = title
+        self.display_screen = display_screen
         self.font = pygame.font.SysFont(None, 48)
         self.small_font = pygame.font.SysFont(None, 32)
 
@@ -35,21 +36,25 @@ class MainMenu():
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 70), 240, 100, "Adjust Volume", 1004),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 210), 240, 100, "Back", 0),
 
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-110, -180), 200, 60, "1600x900", 1000),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(110, -180), 200, 60, "1280x720", 1001)
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, -180), 200, 60, "1600x900", 1000),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(220, -180), 200, 60, "1280x720", 1001),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-220, -180), 200, 60, "Fullscreen", 999)
             ]
         else:
             self.buttons = [
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-300, -70), 240, 100, "AI Showdown", 5),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, -70), 240, 100, "Play with AI", 4),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(300, -70), 240, 100, "Local Multiplayer", 3),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 70), 240, 100, "Settings", 1),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 210), 240, 100, "Exit", -1),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-300, -60), 285, 100, "AI Showdown", 5),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, -60), 285, 100, "Play with AI", 4),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(300, -60), 285, 100, "Local Multiplayer", 3),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 60), 285, 100, "Settings", 1),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 180), 285, 100, "Exit", -1),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(700, 400), 180, 80, "Credits", 6)
             ]
 
-        self.sound_vol = 1
-        self.music_vol = 1
+        self.credits_back_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(700, 400), 180, 80, "Back", 0)
+
+        data = database.get_volume()
+        self.music_vol = data[0]
+        self.sound_vol = data[1]
 
         self.adjust_volume_menu = False
         w = 300
@@ -66,7 +71,8 @@ class MainMenu():
 
         self.__position_slider_buttons()
 
-        self.version_text = self.font.render("v0.12", True, Colours.WHITE)
+        self.version = "v0.13"
+        self.version_text = self.font.render(self.version, True, Colours.WHITE)
 
         self.slider_texts = [
             self.small_font.render("Music Volume", True, Colours.WHITE),
@@ -106,7 +112,7 @@ class MainMenu():
             self.last_pos = pos
 
             for btn in self.buttons:
-                if database.get_resolution != database.get_max_resolution(): # Max res value in database again
+                if database.get_resolution() != database.get_max_resolution(): # Max res value in database again
                     collided, action = btn.check_collision(self.__map_mouse_position(pos))
                 else:
                     collided, action = btn.check_collision(pos)
@@ -117,7 +123,10 @@ class MainMenu():
 
                     if clicked:
                         self.sound.button_click() # Sound effect
-                        if action == 1000:
+                        if action == 999:
+                            database.set_resolution((0, 0))
+                            force_restart.force_restart("Resolution has been updated to Fullscreen")
+                        elif action == 1000:
                             database.set_resolution((1600, 900))
                             force_restart.force_restart("Resolution has been updated to 1600x900")
                         elif action == 1001:
@@ -202,6 +211,38 @@ class MainMenu():
 
             #pygame.draw.circle(self.screen, Colours.PURPLE, (self.last_pos[0], self.last_pos[1]), radius=5) # DEBUG DOT 
 
+    def process_render_credits_screen(self, pos, clicked = False):
+        
+        text = self.font.render("Credits", True, Colours.ORANGEY_YELLOW)
+        self.screen.blit(text, text.get_rect(center = self.__calc_position(-200, -135)))
+
+        self.screen.blit(self.font.render("Evan Partridge", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(0, -150))
+        self.screen.blit(self.small_font.render("did everything", True, Colours.WHITE), self.__calc_position(0, -115))
+
+        self.screen.blit(self.font.render("James Mathieson", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(0, -70))
+        self.screen.blit(self.small_font.render("emotional support and debugging", True, Colours.WHITE), self.__calc_position(0, -35))
+
+        self.screen.blit(self.font.render("Oliver Alcaraz", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(0, 10))
+        self.screen.blit(self.small_font.render("knows lerp math", True, Colours.WHITE), self.__calc_position(0, 45))
+
+        self.screen.blit(self.font.render("Bray Croke", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(0, 90))
+        self.screen.blit(self.small_font.render("some contribution to the main menu", True, Colours.WHITE), self.__calc_position(0, 125))
+
+        #self.screen.blit(self.font.render(f"Gorillapong {self.version}", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(0, 180))
+        self.screen.blit(self.small_font.render(f"Gorillapong {self.version}", True, Colours.WHITE), self.__calc_position(-257, -115))
+
+        if self.credits_back_button.check_collision(self.__map_mouse_position(pos))[0]:
+            self.credits_back_button.hover()
+
+            if clicked:
+                self.sound.button_click() # Sound effect
+                return 0
+
+        self.credits_back_button.render()
+
+        return None
+
+
     def __prep_volume_menu(self):
         self.slider_texts = []
         result = database.get_music_sound()
@@ -251,7 +292,10 @@ class MainMenu():
     def __map_mouse_position(self, pos):
         #output_start + ((output_end - output_start) / (input_end - input_start)) * (input - input_start)
 
-        res = database.get_resolution()
+        if self.display_screen:
+            res = self.display_screen.get_size()
+        else:
+            res = self.screen.get_size()
 
         x_map = ((1600) / (res[0]) * (pos[0]))
         y_map = ((900) / (res[1]) * (pos[1]))

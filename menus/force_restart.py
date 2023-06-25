@@ -8,7 +8,10 @@ from utils.colours import Colours
 def force_restart(note):
 
     clock = pygame.time.Clock()
-    screen = pygame.display.set_mode(database.get_resolution())
+    if database.get_resolution() == pygame.FULLSCREEN:
+        screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    else:
+        screen = pygame.display.set_mode(database.get_resolution())
     font = pygame.font.SysFont(None, 48)
 
     while True:

@@ -16,7 +16,9 @@ class Paddle():
         self.ai_speed = 10 #4
         self.ai_paddle = False
 
+        self.image = image
         self.sprite = pygame.image.load(f'image/{image}.png')
+        self.terminator_sprites = False
 
         if self.orientation == 0:
             self.sprite = pygame.transform.rotate(self.sprite, 90)
@@ -97,3 +99,15 @@ class Paddle():
         
     def get_left_top(self):
         return (self.paddle_pos.x - self.paddle_rect.x / 2, self.paddle_pos.y - self.paddle_rect.y / 2)
+    
+    def swap_sprites(self, activation = None):
+        if self.terminator_sprites and activation == False:
+            self.sprite = pygame.image.load(f'image/{self.image}.png')
+            if self.orientation == 0:
+                self.sprite = pygame.transform.rotate(self.sprite, 90)
+            self.terminator_sprites = False
+        else:
+            self.sprite = pygame.image.load(f'image/{self.image}_terminator.png')
+            if self.orientation == 0:
+                self.sprite = pygame.transform.rotate(self.sprite, 90)
+            self.terminator_sprites = True
