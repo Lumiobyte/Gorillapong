@@ -45,10 +45,28 @@ class MainMenu():
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-300, -60), 285, 100, "AI Showdown", 5),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, -60), 285, 100, "Play with AI", 4),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(300, -60), 285, 100, "Local Multiplayer", 3),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 60), 285, 100, "Settings", 1),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 180), 285, 100, "Exit", -1),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(700, 400), 180, 80, "Credits", 6)
+                button.Button(self.screen, Colours.WHITE, Colours.ORANGEY_YELLOW, self.__calc_position(0, 60), 285, 100, "Settings", 1),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_RED, self.__calc_position(0, 180), 285, 100, "Exit", -1),
+                button.Button(self.screen, Colours.WHITE, Colours.ORANGEY_YELLOW, self.__calc_position(700, 400), 180, 80, "Credits", 6)
             ]
+
+        #self.info_text_font = pygame.font.SysFont()
+        self.hovered_button = 0
+        self.info_texts = {
+            0: "",
+            5: "Watch two bots face off in an epic Double Pong 1v1!",
+            4: "No friends? No worries! Play against Ed Townsend, our friendly Double Pong AI!",
+            3: "Duel your friends in the Double Pong arena!",
+            1: "Contracted malaria? Don't forget to configue your settings!",
+            -1: "Sorry to see you go :(",
+            6: "See the wonderful people behind the game!",
+            1000: "Change resolution to 1600x900",
+            1001: "Change resolution to 1280x720",
+            999: "Use Fullscreen mode (BETA)",
+            1002: "Toggle music",
+            1003: "Toggle sound",
+            1004: "Adjust volume levels"
+        }
 
         self.credits_back_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(700, 400), 180, 80, "Back", 0)
 
@@ -71,7 +89,7 @@ class MainMenu():
 
         self.__position_slider_buttons()
 
-        self.version = "v0.13"
+        self.version = "v0.14.1"
         self.version_text = self.font.render(self.version, True, Colours.WHITE)
 
         self.slider_texts = [
@@ -111,6 +129,8 @@ class MainMenu():
         else:
             self.last_pos = pos
 
+            self.hovered_button = 0
+
             for btn in self.buttons:
                 if database.get_resolution() != database.get_max_resolution(): # Max res value in database again
                     collided, action = btn.check_collision(self.__map_mouse_position(pos))
@@ -120,6 +140,8 @@ class MainMenu():
                 if collided:
 
                     btn.hover()
+
+                    self.hovered_button = btn.button_action
 
                     if clicked:
                         self.sound.button_click() # Sound effect
@@ -208,6 +230,9 @@ class MainMenu():
 
             for btn in self.buttons:
                 btn.render()
+
+            info_text = self.small_font.render(self.info_texts[self.hovered_button], True, Colours.WHITE)
+            self.screen.blit(info_text, info_text.get_rect(center = self.__calc_position(0, 400)))
 
             #pygame.draw.circle(self.screen, Colours.PURPLE, (self.last_pos[0], self.last_pos[1]), radius=5) # DEBUG DOT 
 

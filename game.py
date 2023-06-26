@@ -215,22 +215,22 @@ def get_new_powerup(spawn_index = None):
         spawn_rand = spawn_index
     else:
         if mode == 0:
-            spawn_rand = random.randint(1, 4)
+            spawn_rand = random.randint(1, 9)
         else:
-            spawn_rand = random.randint(1, 5)
+            spawn_rand = random.randint(1, 10)
 
 
     powerup_spawn_counter += 1
 
-    if spawn_rand == 1:
+    if spawn_rand in [1, 2, 3]:
         return powerups.Pineapple(WINDOW)
-    elif spawn_rand == 2:
+    elif spawn_rand in [4, 5]:
         return powerups.Pickle(WINDOW)
-    elif spawn_rand == 3:
+    elif spawn_rand in [6, 7]:
         return powerups.Water(WINDOW)
-    elif spawn_rand == 4:
+    elif spawn_rand in [8, 9, 10]:
         return powerups.Pringle(WINDOW, powerup_spawn_counter)
-    elif spawn_rand == 5:
+    elif spawn_rand in [11]:
         return powerups.Computer(WINDOW)
     
 def perfect_ai(player):
@@ -444,29 +444,40 @@ try: # NEVER DO THIS!!!!!!!!
                 #### Input
 
                 keys = pygame.key.get_pressed()
+
+                if keys[K_LSHIFT]:
+                    p1_shift = True
+                else:
+                    p1_shift = False
+
+                if keys[K_0] or keys[K_RALT]: # Use numpad 0
+                    p2_shift = True
+                else:
+                    p2_shift = False
+
                 if player1_ai or temp_ai_player == player1:
                     pass # Do nothing
                 else:
                     if keys[K_w]:
-                        player1.paddle_vertical.move_positive()
+                        player1.paddle_vertical.move_positive(p1_shift)
                     if keys[K_s]:
-                        player1.paddle_vertical.move_negative()
+                        player1.paddle_vertical.move_negative(p1_shift)
                     if keys[K_a]:
-                        player1.paddle_horizontal.move_negative()
+                        player1.paddle_horizontal.move_negative(p1_shift)
                     if keys[K_d]:
-                        player1.paddle_horizontal.move_positive()
+                        player1.paddle_horizontal.move_positive(p1_shift)
                 
                 if ai or temp_ai_player == player2:
                     pass # Do nothing
                 else:
                     if keys[K_UP]:
-                        player2.paddle_vertical.move_positive()
+                        player2.paddle_vertical.move_positive(p2_shift)
                     if keys[K_DOWN]:
-                        player2.paddle_vertical.move_negative()
+                        player2.paddle_vertical.move_negative(p2_shift)
                     if keys[K_RIGHT]:
-                        player2.paddle_horizontal.move_positive()
+                        player2.paddle_horizontal.move_positive(p2_shift)
                     if keys[K_LEFT]:
-                        player2.paddle_horizontal.move_negative()
+                        player2.paddle_horizontal.move_negative(p2_shift)
 
                 render_queue += [player1.paddle_vertical, player1.paddle_horizontal, player2.paddle_vertical, player2.paddle_horizontal]
 
@@ -690,7 +701,7 @@ try: # NEVER DO THIS!!!!!!!!
                     
                     spawned_powerups.append(get_new_powerup())
 
-                    next_powerup_bounces += random.randrange(6, 15) # (9, 21)
+                    next_powerup_bounces += random.randrange(4, 11) # (6, 15) (9, 21)
 
                 #### Respawn check
                 if out_of_bounds:
@@ -730,6 +741,8 @@ try: # NEVER DO THIS!!!!!!!!
                 WINDOW.blit(font.render(f"NEXT P: {next_powerup_bounces - bounces}", True, Colours.GREY), (710, 875))
                 if ai:
                     WINDOW.blit(font.render(f"AIM: {aim_randomiser}", True, Colours.GREY), (850, 875))
+
+                WINDOW.blit(font.render("ESC to pause", True, Colours.GREY), (1350, 875))
 
                 #WINDOW.blit(font.render("Blue Lives: " + str(player1.lives), True, Colours.GREY), (1000, 850))
                 #WINDOW.blit(font.render("Orange Lives: " + str(player2.lives), True, Colours.GREY), (970, 875))

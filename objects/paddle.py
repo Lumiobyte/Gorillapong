@@ -13,6 +13,7 @@ class Paddle():
         self.paddle_id = paddle_id
 
         self.speed = 10
+        self.speed_mod = 1 # speed modifier
         self.ai_speed = 10 #4
         self.ai_paddle = False
 
@@ -28,39 +29,51 @@ class Paddle():
             self.paddle_rect = Position(20, 190)
             self.paddle_pos = Position(*starting_pos)
 
-    def move_positive(self, distance = None):
+    def move_positive(self, shift = False, distance = None):
+
+        if shift:
+            temp_mod = 0.3 # Holding shift causes paddles to move slower
+        else:
+            temp_mod = 1
+
         if self.orientation == 0:
             if distance:
                 self.paddle_pos.x += distance
             elif self.ai_paddle:
-                self.paddle_pos.x += self.ai_speed
+                self.paddle_pos.x += self.ai_speed * self.speed_mod * temp_mod
             else:
-                self.paddle_pos.x += self.speed
+                self.paddle_pos.x += self.speed * self.speed_mod * temp_mod
         else:
             if distance:
                 self.paddle_pos.y -= distance
             elif self.ai_paddle:
-                self.paddle_pos.y -= self.ai_speed
+                self.paddle_pos.y -= self.ai_speed * self.speed_mod * temp_mod
             else:
-                self.paddle_pos.y -= self.speed
+                self.paddle_pos.y -= self.speed * self.speed_mod * temp_mod
 
         self.limit_pos()
 
-    def move_negative(self, distance = None):
+    def move_negative(self, shift = False, distance = None):
+
+        if shift:
+            temp_mod = 0.5 # Holding shift causes paddles to move slower
+        else:
+            temp_mod = 1
+
         if self.orientation == 0:
             if distance:
                 self.paddle_pos.x -= distance
             elif self.ai_paddle:
-                self.paddle_pos.x -= self.ai_speed
+                self.paddle_pos.x -= self.ai_speed * self.speed_mod * temp_mod
             else:
-                self.paddle_pos.x -= self.speed
+                self.paddle_pos.x -= self.speed * self.speed_mod * temp_mod
         else:
             if distance:
                 self.paddle_pos.y += distance
             elif self.ai_paddle:
-                self.paddle_pos.y += self.ai_speed
+                self.paddle_pos.y += self.ai_speed * self.speed_mod * temp_mod
             else:
-                self.paddle_pos.y += self.speed
+                self.paddle_pos.y += self.speed * self.speed_mod * temp_mod
 
         self.limit_pos()
 
@@ -100,7 +113,7 @@ class Paddle():
     def get_left_top(self):
         return (self.paddle_pos.x - self.paddle_rect.x / 2, self.paddle_pos.y - self.paddle_rect.y / 2)
     
-    def swap_sprites(self, activation = None):
+    def swap_sprites(self, activation = False):
         if self.terminator_sprites and activation == False:
             self.sprite = pygame.image.load(f'image/{self.image}.png')
             if self.orientation == 0:
