@@ -61,3 +61,23 @@ def set_volume(which, vol):
         json.dump(data, file)
 
     return data[which]
+
+def get_stats_toggle():
+    with open(filepath) as file:
+        data = json.load(file)
+
+        return data["show_stats"]
+    
+def toggle_stats_toggle():
+    with open(filepath, mode = "r") as file:
+        data = json.load(file)
+
+        if data["show_stats"]:
+            data["show_stats"] = False
+        else:
+            data["show_stats"] = True
+
+    with open(filepath, mode = "w") as file:
+        json.dump(data, file)
+
+    return data["show_stats"]

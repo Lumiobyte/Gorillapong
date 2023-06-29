@@ -12,12 +12,17 @@ class MainMenu():
         self.screen = window
         self.screen_title = title
         self.display_screen = display_screen
+        self.title_font = pygame.font.SysFont(None, 74)
         self.font = pygame.font.SysFont(None, 48)
         self.small_font = pygame.font.SysFont(None, 32)
 
         self.sound = sound
 
         self.last_pos = (50, 50) # debug feature
+
+        # goriller sproit
+        # poigaim.image.lode()
+        self.gorilla_ball = pygame.image.load('image/gorilla.png')
 
         data = database.get_music_sound()
         if data[0] == True:
@@ -29,26 +34,43 @@ class MainMenu():
         else:
             sound_btn_colour = Colours.LIGHT_PASTEL_RED
 
+        data = database.get_stats_toggle()
+        if data:
+            stats_btn_colour = Colours.ENABLED_GREEN
+        else:
+            stats_btn_colour = Colours.LIGHT_PASTEL_RED
+
         if self.screen_title == "Settings":
             self.buttons = [
-                button.Button(self.screen, music_btn_colour, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(125, -70), 240, 100, "MUSIC", 1002, False),
-                button.Button(self.screen, sound_btn_colour, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-125, -70), 240, 100, "SOUND", 1003, False),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 70), 240, 100, "Adjust Volume", 1004),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 210), 240, 100, "Back", 0),
+                button.Button(self.screen, stats_btn_colour, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(290, -100), 60, 60, "", 1005, False),
+                button.Button(self.screen, music_btn_colour, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-110, -100), 60, 60, "", 1002, False),
+                button.Button(self.screen, sound_btn_colour, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-110, -30), 60, 60, "", 1003, False),
+                button.Button(self.screen, Colours.WHITE, Colours.ORANGEY_YELLOW, self.__calc_position(0, 70), 240, 100, "Adjust Volume", 1004),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_RED, self.__calc_position(0, 270), 240, 100, "Back", 0),
 
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, -180), 200, 60, "1600x900", 1000),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(220, -180), 200, 60, "1280x720", 1001),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-220, -180), 200, 60, "Fullscreen", 999)
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-450, -80), 200, 60, "1600x900", 1000),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-450, 0), 200, 60, "1280x720", 1001),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-450, 80), 200, 60, "Fullscreen", 999)
+            ]
+            self.texts = [
+                ["Graphics", Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-450, -190), self.font],
+                ["Audio", Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, -190), self.font],
+                ["Other", Colours.LIGHT_PASTEL_GREEN, self.__calc_position(450, -190), self.font],
+                ["Toggle music", Colours.WHITE, self.__calc_position(10, -100), self.small_font],
+                ["Toggle sound", Colours.WHITE, self.__calc_position(10, -30), self.small_font],
+                ["Show stats for nerds", Colours.WHITE, self.__calc_position(450, -100), self.small_font]
             ]
         else:
             self.buttons = [
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-300, -60), 285, 100, "AI Showdown", 5),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, -60), 285, 100, "Play with AI", 4),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(300, -60), 285, 100, "Local Multiplayer", 3),
-                button.Button(self.screen, Colours.WHITE, Colours.ORANGEY_YELLOW, self.__calc_position(0, 60), 285, 100, "Settings", 1),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_RED, self.__calc_position(0, 180), 285, 100, "Exit", -1),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-160, -80), 285, 100, "AI Showdown", 5),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-160, 40), 285, 100, "Play with AI", 4),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(160, -80), 285, 100, "Local Multiplayer", 3),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(160, 40), 285, 100, "Competitive", 7),
+                button.Button(self.screen, Colours.WHITE, Colours.ORANGEY_YELLOW, self.__calc_position(-110, 180), 200, 70, "Settings", 1),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_RED, self.__calc_position(110, 180), 200, 70, "Exit", -1),
                 button.Button(self.screen, Colours.WHITE, Colours.ORANGEY_YELLOW, self.__calc_position(700, 400), 180, 80, "Credits", 6)
             ]
+            self.texts = []
 
         #self.info_text_font = pygame.font.SysFont()
         self.hovered_button = 0
@@ -65,7 +87,9 @@ class MainMenu():
             999: "Use Fullscreen mode (BETA)",
             1002: "Toggle music",
             1003: "Toggle sound",
-            1004: "Adjust volume levels"
+            1004: "Adjust volume levels",
+            1005: "Shows various debug information at the bottom of the game window",
+            7: "Local multiplayer with higher stakes and a competitive experience"
         }
 
         self.credits_back_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(700, 400), 180, 80, "Back", 0)
@@ -89,7 +113,7 @@ class MainMenu():
 
         self.__position_slider_buttons()
 
-        self.version = "v0.14.1"
+        self.version = "v0.15"
         self.version_text = self.font.render(self.version, True, Colours.WHITE)
 
         self.slider_texts = [
@@ -172,6 +196,12 @@ class MainMenu():
                             self.adjust_volume_menu = True
                             self.__prep_volume_menu()
                             return None, False
+                        elif action == 1005:
+                            value = database.toggle_stats_toggle()
+                            if value:
+                                btn.colour = Colours.ENABLED_GREEN
+                            else:
+                                btn.colour = Colours.LIGHT_PASTEL_RED
                         else:
                             if action == 4:
                                 return 3, True
@@ -225,11 +255,17 @@ class MainMenu():
             self.back_button.render()
         else:
             self.screen.blit(self.version_text, (20, 850))
-            text = self.font.render(self.screen_title, True, Colours.WHITE)
+            text = self.title_font.render(self.screen_title, True, Colours.WHITE)
             self.screen.blit(text, text.get_rect(center = self.__calc_position(0, -350)))
+            if self.screen_title == "Gorillapong":
+                self.screen.blit(self.gorilla_ball, (self.__calc_position(-107, -364)))
 
             for btn in self.buttons:
                 btn.render()
+            
+            for text in self.texts: # 0: the text itself, 1: text colour, 2: text position (already centered), 3: font object
+                r_text = text[3].render(text[0], True, text[1])
+                self.screen.blit(r_text, r_text.get_rect(center = text[2]))
 
             info_text = self.small_font.render(self.info_texts[self.hovered_button], True, Colours.WHITE)
             self.screen.blit(info_text, info_text.get_rect(center = self.__calc_position(0, 400)))

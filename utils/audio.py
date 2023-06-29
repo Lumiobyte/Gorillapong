@@ -54,6 +54,9 @@ class Audio():
         self.click = pygame.mixer.Sound(self.filepath + 'select.mp3')
         self.click.set_volume(self.sound_vol)
 
+        self.countdown_beep_sound = pygame.mixer.Sound(self.filepath + 'countdown_beep.wav')
+        self.countdown_beep_sound.set_volume(self.sound_vol)
+
     def reinit(self):
         pygame.mixer.music.stop()
         self.__init__()
@@ -76,7 +79,21 @@ class Audio():
             pygame.mixer.music.play(-1)
             self.game_music_playing = True
             self.menu_music_playing = False
+
+    def play_comp_music(self):
+        if not self.game_music_playing and self.music_enabled:
+            pygame.mixer.music.stop()
+            pygame.mixer.music.set_volume(self.music_vol * 0.6)
+            pygame.mixer.music.load(self.filepath + 'comp_music.wav')
+            pygame.mixer.music.play(-1)
+            self.game_music_playing = True
+            self.menu_music_playing = False
         
+    def stop_music(self):
+        pygame.mixer.music.stop()
+        self.game_music_playing = False
+        self.menu_music_playing = False
+
     def bounce(self):
         if self.sound_enabled:
             self.pop.play()
@@ -133,3 +150,7 @@ class Audio():
     def computer_pickup(self):
         if self.sound_enabled:
             self.computer_on.play()
+
+    def countdown_beep(self):
+        if self.sound_enabled:
+            self.countdown_beep_sound.play()
