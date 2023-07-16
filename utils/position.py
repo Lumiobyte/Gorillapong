@@ -3,6 +3,11 @@ import math
 
 @dataclass
 class Position:
+    """
+    This dataclass is used to store coordinates. These coordinates may represent the location of an object, a point relevant to an object,
+    or any other type of point. This reimplements operations like + - * / since one "position" object represents two numbers: an X and Y coordinate.
+    """
+
     x: int
     y: int
 
@@ -21,6 +26,7 @@ class Position:
         return (self.x, self.y)
 
     """
+    Unused limit vars
     x_min_limit: int = None
     x_max_limit: int = None
     y_min_limit: int = None

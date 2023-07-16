@@ -37,6 +37,7 @@ import sys
 from dataclasses import dataclass
 import random
 import traceback
+import datetime
 
 from utils.colours import Colours
 from utils import renderutils, database
@@ -95,6 +96,8 @@ render_queue = [] # Objects are added to this list during the game loop, then re
 font = pygame.font.SysFont(None, 32)
 score_font = pygame.font.SysFont(None, 128)
 mega_font = pygame.font.SysFont(None, 256)
+
+tosaccept = False
 #####
 
 from objects import paddle, balls
@@ -106,10 +109,12 @@ class Player:
     paddle_vertical: paddle.Paddle
     score = 0
     lives = 3
+    name: str
+    colour: tuple
 
 # Initialise the players and their paddles
-player1 = Player(paddle.Paddle(WINDOW, 0, (300, 860), 'banana', 0), paddle.Paddle(WINDOW, 1, (40, 300), 'banana', 1))
-player2 = Player(paddle.Paddle(WINDOW, 0, (1300, 40), 'banana_green', 2), paddle.Paddle(WINDOW, 1, (1560, 300), 'banana_green', 3))
+player1 = Player(paddle.Paddle(WINDOW, 0, (300, 860), 'banana', 0), paddle.Paddle(WINDOW, 1, (40, 300), 'banana', 1), 'Yellow', Colours.PLAYER_YELLOW)
+player2 = Player(paddle.Paddle(WINDOW, 0, (1300, 40), 'banana_green', 2), paddle.Paddle(WINDOW, 1, (1560, 300), 'banana_green', 3), 'Green', Colours.PLAYER_GREEN)
 
 active_balls = [balls.Ball(WINDOW, 15, 5, 0.5, Colours.BALL, 0)] # List of balls currently on the field
 player_last_hit = None
@@ -120,10 +125,28 @@ powerup_spawn_counter = 0 # Useful for any powerups that need a unique ID
 
 mode = 0 # 0 = aivsai, 1 = playervsai, 2 = PvP, 3 = PvP Comp
 comp_started = False
+game_start_timestamp = None
+game_duration = None
+game_duration_string = None
+comp_won = False
+comp_winner = None
+win_threshold = 25 # Make it configurable
 countdown_started = False
 countdown_counter = 3
 temp_ai_player = None
 player_who_died = 0 # hacky way to implement deaths to lives
+
+casual_win_threshold = 0
+powerups_enabled = True
+next_powerup_bounces_range = (9, 15)
+ai_difficulty = 1
+casual_ball_speed = 5.0
+comp_ball_speed = 5.0
+comp_miss_penalty = 2
+comp_ball_speedup = False
+
+powerups_picked_up = 0
+
 #####
 from objects import powerups
 
@@ -147,6 +170,36 @@ repredict = True # Allow AI to make another prediction as to where the ball will
 #####
 
 import math
+
+def set_db_vars():
+    """ Sets all configurable game related variables to the settings stored in the database. """
+
+    global casual_win_threshold
+    global win_threshold # comp 
+    global powerups_enabled
+    global next_powerup_bounces_range
+    global ai_difficulty
+    global casual_ball_speed
+    global comp_ball_speed
+    global comp_miss_penalty
+    global comp_ball_speedup
+
+    gameplay_settings = database.get_all_gameplay_settings(False)
+
+    casual_win_threshold = gameplay_settings[0]
+    casual_ball_speed = [5.0, 6.5][gameplay_settings[1]]
+
+    if gameplay_settings[2] == 0:
+        powerups_enabled = False
+    else:
+        powerups_enabled = True
+        next_powerup_bounces_range = [(18, 30), (9, 21), (4, 11)][gameplay_settings[2] - 1]
+    
+    ai_difficulty = gameplay_settings[3]
+    win_threshold = gameplay_settings[4]
+    comp_ball_speed = [5.0, 6.5][gameplay_settings[5]]
+    comp_miss_penalty = gameplay_settings[6]
+    comp_ball_speedup = gameplay_settings[7]
 
 def collision(rleft, rtop, width, height,   # Rect coords
               center_x, center_y, radius):  # Circle coords
@@ -176,6 +229,19 @@ def collision(rleft, rtop, width, height,   # Rect coords
         return True  # Collision detected
 
     return False  # No collision detected
+
+def reset_comp_vars():
+    global comp_won
+    global comp_winner
+    global comp_started
+    global countdown_started
+    global countdown_counter
+
+    comp_won = 3
+    comp_winner = None
+    comp_started = False
+    countdown_started = False
+    countdown_counter = 3
 
 def clear_powerups(clear_all):
     """ Routine to clear all the powerups in the game """
@@ -208,7 +274,10 @@ def reset_ball():
 
     clear_powerups(False)
 
-    active_balls = [balls.Ball(WINDOW, 15, 5, 0.1, Colours.BALL, 0)] # 5
+    if mode == 3:
+        active_balls = [balls.Ball(WINDOW, 15, comp_ball_speed, 0.1, Colours.BALL, 0)] # 5
+    else:
+        active_balls = [balls.Ball(WINDOW, 15, casual_ball_speed, 0.1, Colours.BALL, 0)]
     rand = random.randint(0, 3)
     if rand == 1:
         active_balls[0].reverse_velocity_x()
@@ -235,6 +304,17 @@ def reset_points():
     
     player1.lives = 3
     player2.lives = 3
+
+def reset_game_vars():
+    """ Reset various variables that change over the course of a game """
+
+    global bounces
+    global next_powerup_bounces
+    global powerups_picked_up
+
+    bounces = 0
+    next_powerup_bounces = 20
+    powerups_picked_up = 0
 
 def start_countdown():
     """ Start the comp mode countdown by setting variables """
@@ -278,6 +358,9 @@ def get_new_powerup(spawn_index = None):
         return powerups.Computer(WINDOW)
     
 def perfect_ai(player):
+    """ This will move the paddles of the designated player to hit the ball.
+        The method used here means it is effectively impossible for the designated player to miss. """ 
+
     divisor = random.randint(20, 25) / 10 # Add some flavor to corner shots by hitting different parts of the paddle (21, 25)
     if aim_randomiser == 0:
         impact_x = player.paddle_horizontal.paddle_pos.x - player.paddle_horizontal.paddle_rect.x / divisor
@@ -301,6 +384,10 @@ def perfect_ai(player):
 
 # Should make the database have a max res value so that these aren't hardcoded
 def map_mouse_position(pos):
+    """ This function maps the real mouse position on the screen to its relative position on the unscaled game window. 
+        Due to the way the alternate resolution settings are implemeneted, without this mouse mapping, buttons would be
+        difficult or impossible to press and the visual position of the cursor on the screen would be different to where the game thinks it is. """
+
     #output_start + ((output_end - output_start) / (input_end - input_start)) * (input - input_start)
 
     if SCREEN:
@@ -313,12 +400,75 @@ def map_mouse_position(pos):
 
     return (x_map, y_map)
 
+def format_game_duration(duration):
+    """ Convert a datetime.timedelta of the game duration to human readable hours, minutes, and seconds """
+    seconds = duration.total_seconds()
+    hours = seconds // 3600
+    minutes = int((seconds % 3600) // 60)
+    seconds = int(seconds % 60)
+
+    return f"{hours}h {minutes}m {seconds}s" if hours > 0 else f"{minutes}m {seconds}s" # Don't show 0 hours 
+
 try: # NEVER DO THIS!!!!!!!!
     looping = True
+    tosaccept = database.get_tosaccept()
+    if not tosaccept:
+        sound.countdown_beep()
     while looping:
         if active_screen != 3:
+            """ Within this IF statement is all the main menu logic. The loop and screen switching is controlled here, while everything else 
+                like click processing and rendering is done elsewhere in designated functions contained in menu and button classes. """
 
-            if active_screen == 6:
+            if not tosaccept: # YOU SHALL NOT PASS! (without accepting our terms)
+                for event in pygame.event.get():
+                    if event.type == MOUSEBUTTONDOWN:
+                        pass
+                    if event.type == QUIT:
+                        pygame.quit()
+                        sys.exit()
+
+                WINDOW.fill(Colours.BG_GREY)
+                WINDOW.blit(score_font.render("TERMS OF SERVICE", True, Colours.ORANGEY_YELLOW), (380, 180))
+
+                WINDOW.blit(font.render("In order to play the game you must agree to the following conditions:", True, Colours.LIGHT_RED), (400, 340))
+                WINDOW.blit(font.render("You consent to the collection and transmission of telemetry data", True, Colours.WHITE), (400, 385))
+                WINDOW.blit(font.render("from the game \"Gorillapong\", potentially inlcuding:", True, Colours.WHITE), (400, 410))
+                WINDOW.blit(font.render("- device hostname", True, Colours.WHITE), (420, 435))
+                WINDOW.blit(font.render("- game settings", True, Colours.WHITE), (420, 460))
+                WINDOW.blit(font.render("- gameplay data e.g. game type, session length", True, Colours.WHITE), (420, 485))
+                WINDOW.blit(font.render("Do you want to proceed?", True, Colours.LIGHT_PASTEL_GREEN), (400, 560))
+                WINDOW.blit(font.render("You may opt out at any time by accessing save.json and modifying \"tosaccept\" to false", True, Colours.SCORE_GREY), (380, 720))
+
+                button1 = pygame.Rect(990, 600, 220, 85)
+                button2 = pygame.Rect(390, 600, 220, 85)
+
+                if pygame.key.get_pressed()[K_SPACE]:
+                    start_countdown()
+
+                # Collision processing for buttons
+                if(button1.collidepoint(map_mouse_position(pygame.mouse.get_pos()))):
+                    pygame.draw.rect(WINDOW, Colours.LIGHT_PASTEL_GREEN, button1)
+                    if pygame.mouse.get_pressed()[0] and delay <= 0:
+                        sound.button_click() # Sound effect
+                        database.accept_tos()
+                        tosaccept = True
+                else:
+                    pygame.draw.rect(WINDOW, Colours.WHITE, button1)
+
+                if(button2.collidepoint(map_mouse_position(pygame.mouse.get_pos()))):
+                    pygame.draw.rect(WINDOW, Colours.LIGHT_RED, button2)
+                    if pygame.mouse.get_pressed()[0] and delay <= 0:
+                        pygame.quit()
+                        sys.exit()
+                else:
+                    pygame.draw.rect(WINDOW, Colours.WHITE, button2)
+
+                WINDOW.blit(font.render("Accept", True, Colours.BLACK), (button1.left + 70, button1.top + 33))
+                WINDOW.blit(font.render("Deny", True, Colours.BLACK), (button2.left + 80, button2.top + 33))
+
+            # When active_screen == 6, the credits screen is shown
+            # It needs a separate loop as it does not use the normal main menu framework, and requires a specific function call
+            elif active_screen == 6:
                 clicked = False
                 for event in pygame.event.get():
                     if event.type == MOUSEBUTTONDOWN:
@@ -328,15 +478,19 @@ try: # NEVER DO THIS!!!!!!!!
                         sys.exit()
 
                 WINDOW.fill(Colours.BG_GREY)
-                result = screens[0].process_render_credits_screen(pygame.mouse.get_pos(), clicked)
+                result = screens[0].process_render_credits_screen(pygame.mouse.get_pos(), clicked) # This handles both click processing and rendering for credits screen
 
-                if result is not None:
+                if result is not None: # When the back button is pressed, return to main menu screen
                     active_screen = result
             else:
+                """ All other screens of the main menu are processed here """
+
                 for event in pygame.event.get():
 
                     if event.type == KEYDOWN:
-                        pass
+                        if event.key == K_7:
+                            tosaccept = False
+                            database.accept_tos(False)
                     elif event.type == MOUSEBUTTONDOWN:
                         result, ai_toggle = screens[active_screen].process_position(event.pos, True)
                         if result != None:
@@ -370,30 +524,41 @@ try: # NEVER DO THIS!!!!!!!!
                                 player1_ai = False
                                 pass
                             if active_screen == 3:
+                                set_db_vars()
                                 if mode == 3:
                                     sound.stop_music()
                                 else:
                                     sound.play_game_music()
                                 reset_points()
+                                reset_game_vars()
                                 show_stats = database.get_stats_toggle()
 
                     elif pygame.mouse.get_pressed()[0]:
+                        """ The volume level adjustment menu needs to recognise click-and-drag for its sliders, therefore a separate elif clause and function are used. """
                         screens[active_screen].process_hold(pygame.mouse.get_pos())
 
-                if event.type == QUIT or active_screen == -1:
+                if event.type == QUIT or active_screen == -1: # Action -1 -> quits game
                     pygame.quit()
                     sys.exit()
                 else:
                     if active_screen != 3 and active_screen != 6:
+                        """ active_screen == 3 -> renders the game
+                            active_screen == 6 -> renders the credits menu which uses a different function call
+                            all other main menu screens use the same function calls so they can all follow this logic """
                         screens[active_screen].process_position(pygame.mouse.get_pos())
                         WINDOW.fill(BACKGROUND)
                         screens[active_screen].render()
+
+                        # Legacy death system, to be removed
                         if player_who_died != 0:
                             WINDOW.blit(font.render(f"Player {player_who_died} died!", True, Colours.WHITE), (600, 300))
 
-                        sound.play_menu_music()
+                        sound.play_menu_music() # The sound controller keeps track and ensures duplicate music will not be played even if this is called many times
 
         else:
+            """ THIS IS THE GAME LOOP """
+
+            # Frame time calculation, used for timers
             last_frame_ticks = current_frame_ticks
             current_frame_ticks = pygame.time.get_ticks()
             time_delta = (current_frame_ticks - last_frame_ticks)
@@ -401,7 +566,8 @@ try: # NEVER DO THIS!!!!!!!!
                 time_delta = 1 # Prevents breakage of menu delays 
 
             ##################################################
-            for event in pygame.event.get():
+
+            for event in pygame.event.get(): # Get all inputs from mouse and keyboard
                 if event.type == KEYDOWN:
                     if event.key == K_ESCAPE:
                         if paused:
@@ -409,8 +575,7 @@ try: # NEVER DO THIS!!!!!!!!
                         else:
                             paused = True
 
-                        #reset_ball()
-
+                    # Cheat keys for spawning powerups 
                     if event.key == K_1:
                         spawned_powerups.append(get_new_powerup(1))
                     elif event.key == K_2:
@@ -422,18 +587,17 @@ try: # NEVER DO THIS!!!!!!!!
                     elif event.key == K_5:
                         spawned_powerups.append(get_new_powerup(5))
 
-                    if event.key == K_BACKSPACE:
+                    if event.key == K_BACKSPACE: # Shortcut to return to main menu
                         active_screen = 0 # Back to main menu
-                        #pygame.quit()
-                        #sys.exit()
 
-                if event.type == QUIT:
+                if event.type == QUIT: # This occurs when they press the X button in the window status bar
                     pygame.quit()
                     sys.exit()
 
-            if paused: # Pause MEnu!!!!!!!!!!
+            if paused:
+                """ PAUSE MENU """
                 
-                pygame.draw.rect(WINDOW, Colours.SCORE_GREY, pygame.Rect(350, 200, 900, 400))
+                pygame.draw.rect(WINDOW, Colours.SCORE_GREY, pygame.Rect(350, 200, 900, 400)) # Blank surface on which to render texts & buttons
                 WINDOW.blit(score_font.render("PAUSED", True, Colours.WHITE), (610, 225))
 
                 button1 = pygame.Rect(430, 460, 220, 85)
@@ -441,6 +605,7 @@ try: # NEVER DO THIS!!!!!!!!
                 button3 = pygame.Rect(682, 460, 220 , 85)
                 button4 = pygame.Rect(682, 360, 220, 85)
 
+                # These if statements detect collisions for each button
                 if(button1.collidepoint(map_mouse_position(pygame.mouse.get_pos()))):
                     pygame.draw.rect(WINDOW, Colours.LIGHT_RED, button1)
                     if pygame.mouse.get_pressed()[0]:
@@ -464,52 +629,58 @@ try: # NEVER DO THIS!!!!!!!!
                         sound.button_click() # Sound effect
                         reset_ball()
                 else:               
-                        pygame.draw.rect(WINDOW, Colours.WHITE, button3)
+                    pygame.draw.rect(WINDOW, Colours.WHITE, button3)
 
-                if mode != 3:
+                if mode != 3: # Don't show powerup related button in comp mode, where there are no powerups
                     if(button4.collidepoint(map_mouse_position(pygame.mouse.get_pos()))):
                         pygame.draw.rect(WINDOW, Colours.ORANGEY_YELLOW, button4)
                         if pygame.mouse.get_pressed()[0]:
                             sound.button_click() # Sound effect
                             clear_powerups(True)
                     else:               
-                            pygame.draw.rect(WINDOW, Colours.WHITE, button4)
+                        pygame.draw.rect(WINDOW, Colours.WHITE, button4)
 
-
+                # Render texts for buttons (button rects were rendered earlier, in the if statements)
                 WINDOW.blit(font.render("Main Menu", True, Colours.BLACK), (button1.left + 50, button1.top + 33))
                 WINDOW.blit(font.render("Resume Game", True, Colours.BLACK), (button2.left + 35, button2.top + 33))
                 WINDOW.blit(font.render("Reset Ball", True, Colours.BLACK), (button3.left + 55, button3.top + 33))
-                if mode != 3:
+                if mode != 3 and powerups_enabled:
                     WINDOW.blit(font.render("Clear Powerups", True, Colours.BLACK), (button4.left + 22, button4.top + 33))
 
-                pygame.draw.rect(WINDOW, Colours.BG_GREY, pygame.Rect(0, 870, 176, 30))
+                pygame.draw.rect(WINDOW, Colours.BG_GREY, pygame.Rect(0, 870, 176, 30)) # Cover up the old FPS text so that the new one can be rendered without it overlapping
 
-                if show_stats:
+                if show_stats: # Only render fps text if stats for nerds is enabled
                     WINDOW.blit(font.render("FPS: {} / {}".format(round(clock.get_fps(), 1), time_delta), True, Colours.GREY), (5, 875))
 
-            elif mode == 3 and not comp_started: # Comp pre-start menu
+            elif mode == 3 and not comp_started:
+                """ COMP PRE-START MENU 
+                    players are brought here when they select comp mode
+                    this shows information about the upcoming game and allows them to start when they are ready
+                    presing start initialises a 3 second countdown before the game begins """
 
                 WINDOW.fill(BACKGROUND)
                 pygame.draw.rect(WINDOW, Colours.SCORE_GREY, pygame.Rect(350, 200, 900, 400))
 
                 if countdown_started:
+                    """ If they pressed start, render countdown numbers """
 
                     WINDOW.blit(mega_font.render(f"{countdown_counter}", True, Colours.LIGHT_PASTEL_GREEN), (740, 330))
 
-                    delay -= time_delta
-                    if delay <= 0:
+                    delay -= time_delta # Subtract the time between the last frame and this frame from the total time we need to wait
+                    if delay <= 0: # If waiting time has elapsed, count down by 1 
                         sound.countdown_beep()
                         countdown_counter -= 1
                         delay = 1008 # Should be about 1 second
                     
-                    if countdown_counter <= 0:
+                    if countdown_counter <= 0: # Countdown is finished, prepare and start the game
                         reset_ball()
                         reset_paddles()
                         sound.play_comp_music()
+                        game_start_timestamp = datetime.datetime.now()
                         comp_started = True
 
                 else:
-
+                    """ Otherwise, show them information and buttons, wait for them to press start or return to the main menu """
                     if delay > 0:
                         delay -= time_delta
 
@@ -518,9 +689,12 @@ try: # NEVER DO THIS!!!!!!!!
                     pygame.draw.rect(WINDOW, Colours.SCORE_GREY, pygame.Rect(350, 200, 900, 400))
                     WINDOW.blit(score_font.render("ARE YOU READY?", True, Colours.LIGHT_PASTEL_GREEN), (400, 230))
 
-                    WINDOW.blit(font.render("First to 25 points wins", True, Colours.WHITE), (700, 350))
+                    WINDOW.blit(font.render(f"First to {win_threshold} points wins", True, Colours.WHITE), (700, 350))
                     WINDOW.blit(font.render("No powerups", True, Colours.WHITE), (750, 380))
-                    WINDOW.blit(font.render("Missing a serve loses a life", True, Colours.WHITE), (675, 410))
+                    if comp_miss_penalty == 2:
+                        WINDOW.blit(font.render("Missing a serve loses a life", True, Colours.WHITE), (675, 410))
+                    elif comp_miss_penalty == 1:
+                        WINDOW.blit(font.render("Missing a serve loses a point", True, Colours.WHITE), (675, 410))
 
                     WINDOW.blit(font.render("(or press space)", True, Colours.WHITE), (1018, 570))
 
@@ -530,6 +704,7 @@ try: # NEVER DO THIS!!!!!!!!
                     if pygame.key.get_pressed()[K_SPACE]:
                         start_countdown()
 
+                    # Collision processing for buttons
                     if(button1.collidepoint(map_mouse_position(pygame.mouse.get_pos()))):
                         pygame.draw.rect(WINDOW, Colours.LIGHT_RED, button1)
                         if pygame.mouse.get_pressed()[0] and delay <= 0:
@@ -549,8 +724,41 @@ try: # NEVER DO THIS!!!!!!!!
                     WINDOW.blit(font.render("Back to Menu", True, Colours.BLACK), (button1.left + 38, button1.top + 33))
                     WINDOW.blit(font.render("LET'S GO!", True, Colours.BLACK), (button2.left + 57, button2.top + 33))
 
+            elif mode == 3 and comp_won:
+                """ WIN SCREEN FOR COMPETITIVE GAME """
+
+                pygame.draw.rect(WINDOW, Colours.SCORE_GREY, pygame.Rect(350, 200, 900, 400))
+                WINDOW.blit(score_font.render(comp_winner.name.upper(), True, comp_winner.colour), (450, 230))
+                WINDOW.blit(font.render("has won the game!", True, Colours.WHITE), (900, 280))
+
+                if player1.score > 9: # If the score is less than 10, render the single digit further to the right so it doesn't look asymmetrical 
+                    WINDOW.blit(score_font.render(str(player1.score), True, player1.colour), (640, 350))
+                else:
+                    WINDOW.blit(score_font.render(str(player1.score), True, player1.colour), (680, 350))
+
+                WINDOW.blit(score_font.render("-", True, Colours.WHITE), (780, 350))
+                WINDOW.blit(score_font.render(str(player2.score), True, player2.colour), (860, 350))
+
+                button1 = pygame.Rect(390, 480, 220, 85)
+
+                # Button collisions
+                if(button1.collidepoint(map_mouse_position(pygame.mouse.get_pos()))):
+                    pygame.draw.rect(WINDOW, Colours.LIGHT_RED, button1)
+                    if pygame.mouse.get_pressed()[0]:
+                        sound.button_click() # Sound effect
+                        paused = False
+                        active_screen = 0
+                        reset_comp_vars()
+                else:
+                    pygame.draw.rect(WINDOW, Colours.WHITE, button1)
+
+                WINDOW.blit(font.render("Back to Menu", True, Colours.BLACK), (button1.left + 38, button1.top + 33))
+
+                WINDOW.blit(font.render(f"Total bounces: {bounces}", True, Colours.LIGHT_GREY), (950, 500))
+                WINDOW.blit(font.render(f"Game duration: {game_duration_string}", True, Colours.LIGHT_GREY), (950, 530))
+
             else:
-                #### Death Check - return to menu. This will 100% break if they try to play again without restarting the program
+                """ l """
 
                 if player1.lives <= 0:
                     #player_who_died = 1
@@ -665,9 +873,24 @@ try: # NEVER DO THIS!!!!!!!!
 
                     if ball.position.x < -100 or ball.position.y > 1000:
                         out_of_bounds = True
+                        if mode == 3 and player_last_hit == None:
+                            sound.lose_life()
+                            if comp_miss_penalty == 2:
+                                player1.lives -= 1
+                            elif comp_miss_penalty == 1 and player1.score > 0:
+                                player1.score -= 1
+
                         scoring_player = player2
+
                     elif ball.position.x > 1700 or ball.position.y < -100:
                         out_of_bounds = True
+                        if mode == 3 and player_last_hit == None:
+                            sound.lose_life()
+                            if comp_miss_penalty == 2:
+                                player2.lives -= 1
+                            elif comp_miss_penalty == 1 and player2.score > 0:
+                                player2.score -= 1
+
                         scoring_player = player1
 
                     # We add balls to render queue later so that they are not behind powerups e.g. water puddle
@@ -819,17 +1042,40 @@ try: # NEVER DO THIS!!!!!!!!
                     """
 
                 #### Powerup spawning
-                if bounces >= next_powerup_bounces and mode != 3:
-                    spawned_powerups.append(get_new_powerup())
-                    next_powerup_bounces += random.randrange(4, 11) # (6, 15) (9, 21)
+                if mode != 3 and powerups_enabled:
+                    if bounces >= next_powerup_bounces:
+                        spawned_powerups.append(get_new_powerup())
+                        next_powerup_bounces += random.randrange(*next_powerup_bounces_range) #(4, 11) # (6, 15) (9, 21)
 
                 #### Respawn check
                 if out_of_bounds:
                     reset_ball()
-                    if(player_last_hit):
+                    if mode == 3:
+                        reset_paddles()
+
+                    if player_last_hit:
                         scoring_player.score += 1
                         player_last_hit = None
                         sound.score_point() # Sound effect
+
+                        if comp_ball_speedup and mode == 3:
+                            comp_ball_speed += 0.005
+
+
+                if player1.score >= win_threshold:
+                    comp_won = True
+                    comp_winner = player1
+                elif player2.score >= win_threshold:
+                    comp_won = True
+                    comp_winner = player2
+
+                if mode == 3 and comp_won:
+
+                    game_duration = datetime.datetime.now() - game_start_timestamp
+                    game_duration_string = format_game_duration(game_duration)
+
+                    sound.win_jingle()
+                    sound.stop_music()
 
                 ######## Graphics code ########
 
@@ -857,8 +1103,8 @@ try: # NEVER DO THIS!!!!!!!!
                 if show_stats:
                     WINDOW.blit(font.render("FPS: {} / {}".format(round(clock.get_fps(), 1), time_delta), True, Colours.GREY), (5, 875))
                     WINDOW.blit(font.render(f"V: ({round(active_balls[0].velocity.x, 5)}, {round(active_balls[0].velocity.y, 5)})", True, Colours.GREY), (180, 875))
-                    WINDOW.blit(font.render(str(bounces), True, Colours.GREY), (600, 875))
-                    WINDOW.blit(font.render(str(active_balls[0].speed), True, Colours.GREY), (550, 875))
+                    WINDOW.blit(font.render(str(bounces), True, Colours.GREY), (550, 875))
+                    WINDOW.blit(font.render(str(round(active_balls[0].speed, 5)), True, Colours.GREY), (600, 875))
                     WINDOW.blit(font.render(f"NEXT P: {next_powerup_bounces - bounces}", True, Colours.GREY), (710, 875))
                     if ai:
                         WINDOW.blit(font.render(f"AIM: {aim_randomiser}", True, Colours.GREY), (850, 875))

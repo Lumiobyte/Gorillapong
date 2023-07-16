@@ -48,6 +48,10 @@ class Audio():
         self.computer_off.set_volume(self.sound_vol)
         self.paint_splash = pygame.mixer.Sound(self.filepath + 'paint.wav')
         self.paint_splash.set_volume(self.sound_vol)
+        self.lose_life_sound = pygame.mixer.Sound(self.filepath + 'loselife.mp3')
+        self.lose_life_sound.set_volume(self.sound_vol)
+        self.win_sound = pygame.mixer.Sound(self.filepath + 'comp_win.wav')
+        self.win_sound.set_volume(self.sound_vol)
 
         self.hover = pygame.mixer.Sound(self.filepath + 'hover.wav')
         self.hover.set_volume(self.sound_vol)
@@ -58,9 +62,13 @@ class Audio():
         self.countdown_beep_sound.set_volume(self.sound_vol)
 
     def reinit(self):
+        """ Reinitialise sound. This is called when sound is enabled/disabled or volume levels are changed """
         pygame.mixer.music.stop()
-        self.__init__()
+        self.__init__() # Calling __init__ again will ensure all sounds will be set to the new volume level (if it was changed)
         self.play_menu_music()
+
+
+    # The below functions simply play the necessary music, if enabled and not already playing
 
     def play_menu_music(self):
         if not self.menu_music_playing and self.music_enabled:
@@ -94,6 +102,9 @@ class Audio():
         self.game_music_playing = False
         self.menu_music_playing = False
 
+
+    # The below functions simply play their respective sound effects, if sound effects are enabled
+
     def bounce(self):
         if self.sound_enabled:
             self.pop.play()
@@ -112,6 +123,7 @@ class Audio():
 
     def water_pickup(self):
         if self.sound_enabled:
+            # Sounds horrible so we removed it 
             #self.water_pour.play()
             pass
 
@@ -130,7 +142,7 @@ class Audio():
     def button_click(self):
         if self.sound_enabled:
             self.click.play()
-
+            
     def score_point(self):
         if self.sound_enabled:
             self.score.play()
@@ -154,3 +166,11 @@ class Audio():
     def countdown_beep(self):
         if self.sound_enabled:
             self.countdown_beep_sound.play()
+
+    def lose_life(self):
+        if self.sound_enabled:
+            self.lose_life_sound.play()
+
+    def win_jingle(self):
+        if self.sound_enabled:
+            self.win_sound.play()

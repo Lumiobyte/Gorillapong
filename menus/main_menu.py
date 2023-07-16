@@ -42,7 +42,7 @@ class MainMenu():
 
         if self.screen_title == "Settings":
             self.buttons = [
-                button.Button(self.screen, stats_btn_colour, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(290, -100), 60, 60, "", 1005, False),
+                button.Button(self.screen, stats_btn_colour, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(340, 300), 60, 60, "", 1005, False),
                 button.Button(self.screen, music_btn_colour, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-110, -100), 60, 60, "", 1002, False),
                 button.Button(self.screen, sound_btn_colour, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-110, -30), 60, 60, "", 1003, False),
                 button.Button(self.screen, Colours.WHITE, Colours.ORANGEY_YELLOW, self.__calc_position(0, 70), 240, 100, "Adjust Volume", 1004),
@@ -50,15 +50,18 @@ class MainMenu():
 
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-450, -80), 200, 60, "1600x900", 1000),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-450, 0), 200, 60, "1280x720", 1001),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-450, 80), 200, 60, "Fullscreen", 999)
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-450, 80), 200, 60, "Fullscreen", 999),
+
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(390, -100), 130, 60, "Casual", 1010),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(540, -100), 130, 60, "Comp", 1011)
             ]
             self.texts = [
                 ["Graphics", Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-450, -190), self.font],
                 ["Audio", Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, -190), self.font],
-                ["Other", Colours.LIGHT_PASTEL_GREEN, self.__calc_position(450, -190), self.font],
+                ["Gameplay", Colours.LIGHT_PASTEL_GREEN, self.__calc_position(460, -190), self.font],
                 ["Toggle music", Colours.WHITE, self.__calc_position(10, -100), self.small_font],
                 ["Toggle sound", Colours.WHITE, self.__calc_position(10, -30), self.small_font],
-                ["Show stats for nerds", Colours.WHITE, self.__calc_position(450, -100), self.small_font]
+                ["Show stats for nerds", Colours.WHITE, self.__calc_position(500, 300), self.small_font]
             ]
         else:
             self.buttons = [
@@ -66,11 +69,41 @@ class MainMenu():
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-160, 40), 285, 100, "Play with AI", 4),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(160, -80), 285, 100, "Local Multiplayer", 3),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(160, 40), 285, 100, "Competitive", 7),
-                button.Button(self.screen, Colours.WHITE, Colours.ORANGEY_YELLOW, self.__calc_position(-110, 180), 200, 70, "Settings", 1),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_RED, self.__calc_position(110, 180), 200, 70, "Exit", -1),
+                button.Button(self.screen, Colours.LIGHT_GREY, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-210, 180), 190, 70, "Statistics", 0, False),
+                button.Button(self.screen, Colours.WHITE, Colours.ORANGEY_YELLOW, self.__calc_position(0, 180), 190, 70, "Settings", 1),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_RED, self.__calc_position(210, 180), 190, 70, "Exit", -1),
                 button.Button(self.screen, Colours.WHITE, Colours.ORANGEY_YELLOW, self.__calc_position(700, 400), 180, 80, "Credits", 6)
             ]
             self.texts = []
+
+        # Only for settings menu but putting them here is an easy way to fix errors
+        self.variant_0_texts = [
+            ["Score goal:", Colours.WHITE, self.__calc_position(310, 0), self.small_font],
+            ["Ball speed:", Colours.WHITE, self.__calc_position(310, 60), self.small_font],
+            ["Powerups:", Colours.WHITE, self.__calc_position(310, 120), self.small_font],
+            ["AI difficulty:", Colours.WHITE, self.__calc_position(310, 180), self.small_font]
+        ]
+
+        self.variant_0_buttons = [
+            button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(580, 10), 135, 30, "Value", 2000, font = self.small_font),
+            button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(580, 70), 135, 30, "Value 2", 2001, font = self.small_font),
+            button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(580, 130), 135, 30, "Value 3", 2002, font = self.small_font),
+            button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(580, 190), 135, 30, "Value 4", 2003, font = self.small_font)
+        ]
+
+        self.variant_1_texts = [
+            ["Score goal:", Colours.WHITE, self.__calc_position(310, 0), self.small_font],
+            ["Ball speed:", Colours.WHITE, self.__calc_position(310, 60), self.small_font],
+            ["Serve miss:", Colours.WHITE, self.__calc_position(310, 120), self.small_font],
+            ["Ball speed up:", Colours.WHITE, self.__calc_position(310, 180), self.small_font]
+        ]
+
+        self.variant_1_buttons = [
+            button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(580, 10), 135, 30, "Value", 2100, font = self.small_font),
+            button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(580, 70), 135, 30, "Value 2", 2101, font = self.small_font),
+            button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(580, 130), 135, 30, "Value 3", 2102, font = self.small_font),
+            button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(580, 190), 135, 30, "Value 4", 2103, font = self.small_font)
+        ]
 
         #self.info_text_font = pygame.font.SysFont()
         self.hovered_button = 0
@@ -82,6 +115,7 @@ class MainMenu():
             1: "Contracted malaria? Don't forget to configue your settings!",
             -1: "Sorry to see you go :(",
             6: "See the wonderful people behind the game!",
+            8: "Lifetime statistics from all play sessions",
             1000: "Change resolution to 1600x900",
             1001: "Change resolution to 1280x720",
             999: "Use Fullscreen mode (BETA)",
@@ -89,8 +123,20 @@ class MainMenu():
             1003: "Toggle sound",
             1004: "Adjust volume levels",
             1005: "Shows various debug information at the bottom of the game window",
-            7: "Local multiplayer with higher stakes and a competitive experience"
+            7: "Local multiplayer with higher stakes and a competitive experience",
+            1010: "Gameplay settings for casual modes",
+            1011: "Gameplay settings for competitive mode",
+            2000: "The amount of points needed to win",
+            2001: "The speed of the ball",
+            2002: "Amount of powerups that spawn on the play field",
+            2003: "Difficulty of the AI in Player VS AI mode",
+            2100: "The amout of points needed to win",
+            2101: "The speed of the ball",
+            2102: "The penalty for missing a serve when the ball respawns",
+            2103: "Enable the ball speed to slowly increase over time"
         }
+
+        self.gameplay_settings_menu_variant = 0 # 0 = casual, 1 = comp
 
         self.credits_back_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(700, 400), 180, 80, "Back", 0)
 
@@ -112,8 +158,9 @@ class MainMenu():
         ]
 
         self.__position_slider_buttons()
+        self.__setup_gameplay_setting_buttons()
 
-        self.version = "v0.15"
+        self.version = "v0.16"
         self.version_text = self.font.render(self.version, True, Colours.WHITE)
 
         self.slider_texts = [
@@ -202,6 +249,10 @@ class MainMenu():
                                 btn.colour = Colours.ENABLED_GREEN
                             else:
                                 btn.colour = Colours.LIGHT_PASTEL_RED
+                        elif action == 1010:
+                            self.gameplay_settings_menu_variant = 0
+                        elif action == 1011:
+                            self.gameplay_settings_menu_variant = 1
                         else:
                             if action == 4:
                                 return 3, True
@@ -209,8 +260,51 @@ class MainMenu():
                                 return 5, True
                             return action, False
                         
+            if self.gameplay_settings_menu_variant == 0:
+                for btn in self.variant_0_buttons:
+                    self.__process_gameplay_settings_button(btn, pos, clicked)
+            else:
+                for btn in self.variant_1_buttons:
+                    self.__process_gameplay_settings_button(btn, pos, clicked)
+                        
             if clicked: # This fix kills me. The entire UI needs a rewrite
                 return None, False
+            
+    def __process_gameplay_settings_button(self, btn, pos, clicked):
+        if database.get_resolution() != database.get_max_resolution(): # Max res value in database again
+            collided, action = btn.check_collision(self.__map_mouse_position(pos))
+        else:
+            collided, action = btn.check_collision(pos)
+
+        if collided:
+            btn.hover()
+            self.hovered_button = action
+
+            if clicked:
+                self.sound.button_click()
+
+                if action == 2000:
+                    new_title = database.change_gameplay_setting("casual_score_goal")
+                elif action == 2001:
+                    new_title = database.change_gameplay_setting("casual_ball_speed")
+                elif action == 2002:
+                    new_title = database.change_gameplay_setting("casual_powerups")
+                elif action == 2003:
+                    new_title = database.change_gameplay_setting("casual_ai_difficulty")
+                elif action == 2100:
+                    new_title = database.change_gameplay_setting("comp_score_goal")
+                elif action == 2101:
+                    new_title = database.change_gameplay_setting("comp_ball_speed")
+                elif action == 2102:
+                    new_title = database.change_gameplay_setting("comp_serve_miss_penalty")
+                elif action == 2103:
+                    new_title = database.change_gameplay_setting("comp_ball_speedup")
+
+                print(action)
+                print(new_title)
+
+                btn.title = new_title
+            
             
     def process_hold(self, pos):
         if self.adjust_volume_menu:
@@ -270,6 +364,30 @@ class MainMenu():
             info_text = self.small_font.render(self.info_texts[self.hovered_button], True, Colours.WHITE)
             self.screen.blit(info_text, info_text.get_rect(center = self.__calc_position(0, 400)))
 
+            if self.screen_title == "Settings":
+
+                res = database.get_resolution()
+                if res == 0:
+                    pygame.draw.rect(self.screen, Colours.ENABLED_GREEN, pygame.Rect(self.buttons[7].button_rect.left - 5, self.buttons[7].button_rect.top - 5, 210, 70), 5)
+                elif res == (1600, 900):
+                    pygame.draw.rect(self.screen, Colours.ENABLED_GREEN, pygame.Rect(self.buttons[5].button_rect.left - 5, self.buttons[5].button_rect.top - 5, 210, 70), 5)
+                elif res == (1280, 720):
+                    pygame.draw.rect(self.screen, Colours.ENABLED_GREEN, pygame.Rect(self.buttons[6].button_rect.left - 5, self.buttons[6].button_rect.top - 5, 210, 70), 5)
+
+                pygame.draw.rect(self.screen, Colours.SCORE_GREY, pygame.Rect(1070, 415, 400, 285))
+                if self.gameplay_settings_menu_variant == 0:
+                    pygame.draw.polygon(self.screen, Colours.SCORE_GREY, ((1165, 415), (1215, 415), (1190, 390)))
+                    for text in self.variant_0_texts:
+                        self.screen.blit(text[3].render(text[0], True, text[1]), text[2])
+                    for btn in self.variant_0_buttons:
+                        btn.render()
+                else:
+                    pygame.draw.polygon(self.screen, Colours.SCORE_GREY, ((1315, 415), (1365, 415), (1340, 390)))
+                    for text in self.variant_1_texts:
+                        self.screen.blit(text[3].render(text[0], True, text[1]), text[2])
+                    for btn in self.variant_1_buttons:
+                        btn.render()
+
             #pygame.draw.circle(self.screen, Colours.PURPLE, (self.last_pos[0], self.last_pos[1]), radius=5) # DEBUG DOT 
 
     def process_render_credits_screen(self, pos, clicked = False):
@@ -302,7 +420,19 @@ class MainMenu():
         self.credits_back_button.render()
 
         return None
+    
+    def __setup_gameplay_setting_buttons(self):
+        counter = 0
+        for setting_title in database.get_all_gameplay_settings():
+            if counter > 3:
+                self.variant_1_buttons[counter - 4].title = setting_title
+            else:
+                #print(self.variant_0_buttons[counter].title)
+                self.variant_0_buttons[counter].title = setting_title
+                #print(setting_title)
+                #print(counter)
 
+            counter += 1
 
     def __prep_volume_menu(self):
         self.slider_texts = []
