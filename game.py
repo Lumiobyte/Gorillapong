@@ -31,6 +31,13 @@
 #score gained from hitting power ups.....
 #
 
+
+# TODO:
+# - game window icon
+# - bg for main menu
+# - music and sound credits
+
+
 import pygame
 from pygame.locals import *
 import sys
