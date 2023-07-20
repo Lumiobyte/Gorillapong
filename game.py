@@ -33,9 +33,8 @@
 
 
 # TODO:
-# - game window icon
 # - bg for main menu
-# - music and sound credits
+# - banananators in the ai games
 
 
 import pygame
@@ -67,6 +66,9 @@ else:
         SCREEN = pygame.display.set_mode(database.get_resolution())
 
 pygame.display.set_caption("Gorilla Pong")
+pygame.display.set_icon(pygame.image.load('image/gorilla.png'))
+
+bg_image = pygame.transform.scale(pygame.image.load('image/bg_dark.png'), (WINDOW.get_width(), WINDOW.get_height()))
 
 """ This is unnecessary, since resolution can only be switched on the main menu and doing so forces a game restart.
 def switch_resolution(new_res):
@@ -178,6 +180,10 @@ repredict = True # Allow AI to make another prediction as to where the ball will
 
 import math
 
+def set_paddle_sprite_for_player(player, activation = False):
+    player.paddle_vertical.swap_sprites(activation)
+    player.paddle_horizontal.swap_sprites(activation)
+
 def set_db_vars():
     """ Sets all configurable game related variables to the settings stored in the database. """
 
@@ -200,7 +206,7 @@ def set_db_vars():
         powerups_enabled = False
     else:
         powerups_enabled = True
-        next_powerup_bounces_range = [(18, 30), (9, 21), (4, 11)][gameplay_settings[2] - 1]
+        next_powerup_bounces_range = [(18, 30), (9, 21), (4, 11), (1, 2)][gameplay_settings[2] - 1]
     
     ai_difficulty = gameplay_settings[3]
     win_threshold = gameplay_settings[4]
@@ -244,7 +250,7 @@ def reset_comp_vars():
     global countdown_started
     global countdown_counter
 
-    comp_won = 3
+    comp_won = False
     comp_winner = None
     comp_started = False
     countdown_started = False
@@ -440,9 +446,9 @@ try: # NEVER DO THIS!!!!!!!!
                 WINDOW.blit(font.render("In order to play the game you must agree to the following conditions:", True, Colours.LIGHT_RED), (400, 340))
                 WINDOW.blit(font.render("You consent to the collection and transmission of telemetry data", True, Colours.WHITE), (400, 385))
                 WINDOW.blit(font.render("from the game \"Gorillapong\", potentially inlcuding:", True, Colours.WHITE), (400, 410))
-                WINDOW.blit(font.render("- device hostname", True, Colours.WHITE), (420, 435))
-                WINDOW.blit(font.render("- game settings", True, Colours.WHITE), (420, 460))
-                WINDOW.blit(font.render("- gameplay data e.g. game type, session length", True, Colours.WHITE), (420, 485))
+                WINDOW.blit(font.render("- device hostname, device specifications", True, Colours.WHITE), (420, 435))
+                WINDOW.blit(font.render("- resolution, audio settings, gameplay settings", True, Colours.WHITE), (420, 460))
+                WINDOW.blit(font.render("- game launches, button clicks, game sessions, errors", True, Colours.WHITE), (420, 485))
                 WINDOW.blit(font.render("Do you want to proceed?", True, Colours.LIGHT_PASTEL_GREEN), (400, 560))
                 WINDOW.blit(font.render("You may opt out at any time by accessing save.json and modifying \"tosaccept\" to false", True, Colours.SCORE_GREY), (380, 720))
 
@@ -492,6 +498,9 @@ try: # NEVER DO THIS!!!!!!!!
             else:
                 """ All other screens of the main menu are processed here """
 
+                if active_screen == 0:
+                    WINDOW.blit(bg_image, (0, 0))
+
                 for event in pygame.event.get():
 
                     if event.type == KEYDOWN:
@@ -510,8 +519,12 @@ try: # NEVER DO THIS!!!!!!!!
                             ai = ai_toggle
                             if ai:
                                 mode = 1 # Player vs AI mode
+                                set_paddle_sprite_for_player(player2, True)
+                                set_paddle_sprite_for_player(player1, False)
                             else:
                                 mode = 2 # Multiplayer mode
+                                set_paddle_sprite_for_player(player2, False)
+                                set_paddle_sprite_for_player(player1, False)
                             player2.paddle_horizontal.ai_paddle = ai_toggle
                             player2.paddle_vertical.ai_paddle = ai_toggle
                             repredict = True
@@ -520,6 +533,8 @@ try: # NEVER DO THIS!!!!!!!!
                                 player1_ai = True
                                 active_screen = 3
                                 mode = 0
+                                set_paddle_sprite_for_player(player2, True)
+                                set_paddle_sprite_for_player(player1, True)
                             elif active_screen == 7: # Comp mode
                                 player1_ai = False
                                 active_screen = 3
@@ -527,6 +542,8 @@ try: # NEVER DO THIS!!!!!!!!
                                 delay = 803 # Should be long enough to prevent issues, around 0.8 sec
                                 countdown_started = False
                                 comp_started = False
+                                set_paddle_sprite_for_player(player2, False)
+                                set_paddle_sprite_for_player(player1, False)
                             else:
                                 player1_ai = False
                                 pass
@@ -553,7 +570,8 @@ try: # NEVER DO THIS!!!!!!!!
                             active_screen == 6 -> renders the credits menu which uses a different function call
                             all other main menu screens use the same function calls so they can all follow this logic """
                         screens[active_screen].process_position(pygame.mouse.get_pos())
-                        WINDOW.fill(BACKGROUND)
+                        if active_screen != 0:
+                            WINDOW.fill(BACKGROUND)
                         screens[active_screen].render()
 
                         # Legacy death system, to be removed

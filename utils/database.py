@@ -7,7 +7,7 @@ filepath = "./save.json"
 gameplay_setting_text_map = {
     "casual_score_goal": None,
     "casual_ball_speed": ["Normal", "Fast"],
-    "casual_powerups":  ["OFF", "Few", "Normal", "Many"],
+    "casual_powerups":  ["OFF", "Few", "Normal", "Many", "Party"],
     "casual_ai_difficulty": ["Easy", "Normal", "Hard"],
     "comp_score_goal": None,
     "comp_ball_speed": ["Normal", "Fast"],
@@ -126,12 +126,12 @@ def change_gameplay_setting(setting):
             return_value = ["Normal", "Fast"][data[setting]]
 
         elif setting == "casual_powerups":
-            if data[setting] < 3:
+            if data[setting] < 4:
                 data[setting] += 1
             else:
                 data[setting] = 0
 
-            return_value = ["OFF", "Few", "Normal", "Many"][data[setting]]
+            return_value = ["OFF", "Few", "Normal", "Many", "Party"][data[setting]]
 
         elif setting == "casual_ai_difficulty":
             if data[setting] < 2:

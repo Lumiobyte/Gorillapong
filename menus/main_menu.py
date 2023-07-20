@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
 import sys
+import os
 
 from menus import button, force_restart
 from utils import database
@@ -401,14 +402,17 @@ class MainMenu():
         self.screen.blit(self.font.render("James Mathieson", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(0, -70))
         self.screen.blit(self.small_font.render("chief vision officer and sprite artist", True, Colours.WHITE), self.__calc_position(0, -35))
 
-        self.screen.blit(self.font.render("Oliver Alcaraz", True, Colours.DARK_GREEN), self.__calc_position(0, 10))
+        self.screen.blit(self.font.render("Oliver Alcaraz", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(0, 10))
         self.screen.blit(self.small_font.render("implemented lerp for ai paddles", True, Colours.WHITE), self.__calc_position(0, 45))
 
-        self.screen.blit(self.font.render("Bray Croke", True, Colours.DARK_GREEN), self.__calc_position(0, 90))
-        self.screen.blit(self.small_font.render("main menu layout from v0.1 to v0.14.1", True, Colours.WHITE), self.__calc_position(0, 125))
+        self.screen.blit(self.font.render("Bray Croke", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(0, 90))
+        self.screen.blit(self.small_font.render("ui design", True, Colours.WHITE), self.__calc_position(0, 125))
 
-        self.screen.blit(self.font.render("Freesound Contributors", True, Colours.DARK_GREEN), self.__calc_position(0, 170))
+        self.screen.blit(self.font.render("Freesound Contributors", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(0, 170))
         self.screen.blit(self.small_font.render("game music and sound effects", True, Colours.WHITE), self.__calc_position(0, 205))
+        
+        #freesound_credits_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(40, 245), 80, 30, "see all", 0, font = self.small_font)
+        freesound_credits_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(450, 185), 90, 30, "see all", 0, font = self.small_font)
 
         #self.screen.blit(self.font.render(f"Gorillapong {self.version}", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(0, 180))
         self.screen.blit(self.small_font.render(f"Gorillapong {self.version}", True, Colours.WHITE), self.__calc_position(-257, -115))
@@ -419,8 +423,20 @@ class MainMenu():
             if clicked:
                 self.sound.button_click() # Sound effect
                 return 0
+            
+        if freesound_credits_button.check_collision(self.__map_mouse_position(pos))[0]:
+            freesound_credits_button.hover()
+
+            if clicked:
+                self.sound.button_click() # Sound effect
+                try:
+                    os.startfile('sound_credits.txt')
+                except:
+                    pass
+                return 6
 
         self.credits_back_button.render()
+        freesound_credits_button.render()
 
         return None
     

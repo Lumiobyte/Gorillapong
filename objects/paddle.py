@@ -119,7 +119,7 @@ class Paddle():
             if self.orientation == 0:
                 self.sprite = pygame.transform.rotate(self.sprite, 90)
             self.terminator_sprites = False
-        else:
+        elif activation == True:
             self.sprite = pygame.image.load(f'image/{self.image}_terminator.png')
             if self.orientation == 0:
                 self.sprite = pygame.transform.rotate(self.sprite, 90)
