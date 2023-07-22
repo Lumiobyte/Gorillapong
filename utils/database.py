@@ -202,8 +202,8 @@ def set_stat(stat, change):
     with open(filepath, mode = 'r') as file:
         data = json.load(file)
 
-        data[stat] += change
-        return_value = data[stat]
+        data['stats'][stat] += change
+        return_value = data['stats'][stat]
 
     with open(filepath, mode = 'w') as file:
         json.dump(data, file)
@@ -215,7 +215,24 @@ def get_stat(stat):
     with open(filepath) as file:
         data = json.load(file)
 
-        return data[stat]
+        return data['stats'][stat]
+    
+def get_all_stats():
+    """ Return dict of all statistic variables """
+    with open(filepath) as file:
+        data = json.load(file)
+
+        return data['stats']
+    
+def reset_stats():
+    """ Reset all stats """
+    with open(filepath, mode = 'r') as file:
+        data = json.load(file)
+
+        data['stats'] = {"total_bounces": 0, "total_playtime": 0, "playtime_0": 0, "playtime_1": 0, "playtime_2": 0, "playtime_3": 0, "total_powerups": 0, "total_pixels_travelled": 0, "total_points_scored_p1": 0, "total_points_scored_p2": 0, "serves_missed": 0}
+
+    with open(filepath, mode = 'w') as file:
+        json.dump(data, file)
     
 def get_tosaccept():
     """ Retrieve TOS accept status"""

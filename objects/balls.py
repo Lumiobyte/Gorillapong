@@ -73,11 +73,16 @@ class Ball:
         self.paddle_last_hit = paddle_hit
 
     def tick(self):
-        if self.speed < 0: # Lazy fix for getting stuck in bugged water puddles
+        if self.speed <= 0: # Lazy fix for getting stuck in bugged water puddles
             self.speed = 5.0
             
-        self.position.x += (self.velocity.x * self.speed)
-        self.position.y += (self.velocity.y * self.speed)
+        x_delta = (self.velocity.x * self.speed)
+        y_delta = (self.velocity.y * self.speed)
+
+        self.position.x += x_delta
+        self.position.y += y_delta
+
+        return x_delta + y_delta
     
     def future_position(self, iterations = None): # Add ability to iterate until a certain x or y is reached.
         x = self.position.x

@@ -2,9 +2,10 @@ import pygame
 from pygame.locals import *
 import sys
 import os
+import datetime
 
 from menus import button, force_restart
-from utils import database
+from utils import database, renderutils
 from utils.colours import Colours
 
 class MainMenu():
@@ -70,7 +71,7 @@ class MainMenu():
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-160, 40), 285, 100, "Play with AI", 4),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(160, -80), 285, 100, "Local Multiplayer", 3),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(160, 40), 285, 100, "Competitive", 7),
-                button.Button(self.screen, Colours.LIGHT_GREY, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-210, 180), 190, 70, "Statistics", 0, False),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-210, 180), 190, 70, "Statistics", 8),
                 button.Button(self.screen, Colours.WHITE, Colours.ORANGEY_YELLOW, self.__calc_position(0, 180), 190, 70, "Settings", 1),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_RED, self.__calc_position(210, 180), 190, 70, "Exit", -1),
                 button.Button(self.screen, Colours.WHITE, Colours.ORANGEY_YELLOW, self.__calc_position(700, 400), 180, 80, "Credits", 6)
@@ -161,7 +162,7 @@ class MainMenu():
         self.__position_slider_buttons()
         self.__setup_gameplay_setting_buttons()
 
-        self.version = "v0.16"
+        self.version = "v0.17"
         self.version_text = self.font.render(self.version, True, Colours.WHITE)
 
         self.slider_texts = [
@@ -169,6 +170,9 @@ class MainMenu():
             self.small_font.render("Sound Volume", True, Colours.WHITE)
         ]
         self.back_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 210), 240, 100, "Back", 1)
+
+        self.stats_screen_playtime_options = ['total', 'ai vs ai', 'player vs ai', 'multiplayer', 'competitive']
+        self.playtime_selected = 0
 
 
     def process_position(self, pos, clicked = False): # Execute actions for clicks directed to this menu
@@ -437,6 +441,73 @@ class MainMenu():
 
         self.credits_back_button.render()
         freesound_credits_button.render()
+
+        return None
+    
+    def process_render_statistics_screen(self, pos, clicked):
+
+        statistics = database.get_all_stats()
+
+        playtimes = [
+            renderutils.format_timedelta(datetime.timedelta(seconds = statistics['total_playtime'])),
+            renderutils.format_timedelta(datetime.timedelta(seconds = statistics['playtime_0'])),
+            renderutils.format_timedelta(datetime.timedelta(seconds = statistics['playtime_1'])),
+            renderutils.format_timedelta(datetime.timedelta(seconds = statistics['playtime_2'])),
+            renderutils.format_timedelta(datetime.timedelta(seconds = statistics['playtime_3']))
+        ]
+
+        text = self.font.render("Statistics", True, Colours.ORANGEY_YELLOW)
+        self.screen.blit(text, text.get_rect(center = self.__calc_position(0, -350)))
+
+        self.screen.blit(self.font.render("Playtime", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(-550, -200))
+        self.screen.blit(self.font.render(playtimes[self.playtime_selected], True, Colours.WHITE), self.__calc_position(-530, -160))
+
+        self.screen.blit(self.font.render("Total Ball Pixels Travelled", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(-550, -70))
+        self.screen.blit(self.font.render(str(round(statistics['total_pixels_travelled'])) + " px", True, Colours.WHITE), self.__calc_position(-530, -30))
+
+        self.screen.blit(self.font.render("Total Bounces", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(-550, 70))
+        self.screen.blit(self.font.render(str(statistics['total_bounces']), True, Colours.WHITE), self.__calc_position(-530, 110))
+
+        self.screen.blit(self.font.render("Total Powerups Collected", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(-550, 200))
+        self.screen.blit(self.font.render(str(statistics['total_powerups']), True, Colours.WHITE), self.__calc_position(-530, 240))
+
+        self.screen.blit(self.font.render("Total Serves Missed", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(200, -200))
+        self.screen.blit(self.font.render(str(statistics['serves_missed']), True, Colours.WHITE), self.__calc_position(220, -160))
+
+        self.screen.blit(self.font.render("Total Points Scored", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(200, -70))
+        self.screen.blit(self.font.render(f"Yellow: {statistics['total_points_scored_p1']}", True, Colours.PLAYER_YELLOW), self.__calc_position(220, -30))
+        self.screen.blit(self.font.render(f"Green: {statistics['total_points_scored_p2']}", True, Colours.PLAYER_GREEN), self.__calc_position(225, 10))
+
+        playtime_gamemode_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-320, -185), 150, 30, self.stats_screen_playtime_options[self.playtime_selected], 0, font = self.small_font)
+        reset_stats_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_RED, self.__calc_position(-630, 400), 320, 80, "Reset Statistics", 0)
+
+        if self.credits_back_button.check_collision(self.__map_mouse_position(pos))[0]:
+            self.credits_back_button.hover()
+
+            if clicked:
+                self.sound.button_click() # Sound effect
+                return 0
+            
+        
+        if playtime_gamemode_button.check_collision(self.__map_mouse_position(pos))[0]:
+            playtime_gamemode_button.hover()
+
+            if clicked:
+                self.sound.button_click() # Sound effect
+                self.playtime_selected += 1
+                if self.playtime_selected > 4:
+                    self.playtime_selected = 0
+
+        if reset_stats_button.check_collision(self.__map_mouse_position(pos))[0]:
+            reset_stats_button.hover()
+
+            if clicked:
+                self.sound.button_click() # Sound effect
+                database.reset_stats()
+    
+        self.credits_back_button.render()
+        playtime_gamemode_button.render()
+        reset_stats_button.render()
 
         return None
     

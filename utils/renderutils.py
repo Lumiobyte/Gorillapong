@@ -33,3 +33,12 @@ def lerp(a, b, c):
     """ Linear interpolation enables smooth movement of an object between two points a and b at speed c. It's used for AI's paddles.
         The return value of this function is the number of pixels the AI paddle should move in that frame """
     return a+(b-a)*c
+
+def format_timedelta(duration):
+    """ Convert a datetime.timedelta to human readable hours, minutes, and seconds """
+    seconds = duration.total_seconds()
+    hours = seconds // 3600
+    minutes = int((seconds % 3600) // 60)
+    seconds = int(seconds % 60)
+
+    return f"{hours}h {minutes}m {seconds}s" if hours > 0 else f"{minutes}m {seconds}s" # Don't show 0 hours 

@@ -12,9 +12,9 @@ class Paddle():
 
         self.paddle_id = paddle_id
 
-        self.speed = 10
+        self.speed = 12
         self.speed_mod = 1 # speed modifier
-        self.ai_speed = 10 #4
+        self.ai_speed = 12 #4
         self.ai_paddle = False
 
         self.image = image

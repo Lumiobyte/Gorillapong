@@ -117,6 +117,7 @@ class Player:
     paddle_horizontal: paddle.Paddle
     paddle_vertical: paddle.Paddle
     score = 0
+    total_score = 0
     lives = 3
     name: str
     colour: tuple
@@ -135,6 +136,7 @@ powerup_spawn_counter = 0 # Useful for any powerups that need a unique ID
 mode = 0 # 0 = aivsai, 1 = playervsai, 2 = PvP, 3 = PvP Comp
 comp_started = False
 game_start_timestamp = None
+game_pause_timestamp = None
 game_duration = None
 game_duration_string = None
 comp_won = False
@@ -144,6 +146,10 @@ countdown_started = False
 countdown_counter = 3
 temp_ai_player = None
 player_who_died = 0 # hacky way to implement deaths to lives
+
+powerups_picked_up = 0
+ball_pixels_travelled = 0
+serves_missed = 0
 
 casual_win_threshold = 0
 powerups_enabled = True
@@ -310,24 +316,48 @@ def reset_paddles():
     player2.paddle_vertical.move_to(450)
 
 def reset_points():
-    """ Reset players' points and lives """
+    """ Increment stats then reset players' points and lives """
+
+    database.set_stat("total_points_scored_p1", player1.total_score)
+    database.set_stat("total_points_scored_p2", player2.total_score)
 
     player1.score = 0
     player2.score = 0
+    player1.total_score = 0
+    player2.total_score = 0
     
     player1.lives = 3
     player2.lives = 3
 
-def reset_game_vars():
-    """ Reset various variables that change over the course of a game """
+def reset_game_vars(from_pause = False):
+    """ Imcrement stats, then reset various variables that change over the course of a game """
 
     global bounces
     global next_powerup_bounces
     global powerups_picked_up
+    global game_start_timestamp
+    global game_duration
+    global ball_pixels_travelled
+    global serves_missed
+
+    database.set_stat("total_bounces", bounces)
+    database.set_stat("total_powerups", powerups_picked_up)
+    database.set_stat("total_pixels_travelled", ball_pixels_travelled)
+    database.set_stat("serves_missed", serves_missed)
+
+    if from_pause:
+        game_duration = game_pause_timestamp - game_start_timestamp 
+
+    database.set_stat("total_playtime", game_duration.total_seconds())
+    database.set_stat(f"playtime_{mode}", game_duration.total_seconds())
 
     bounces = 0
     next_powerup_bounces = 20
     powerups_picked_up = 0
+    game_start_timestamp = None
+    game_duration = 0
+    ball_pixels_travelled = 0
+    serves_missed = 0
 
 def start_countdown():
     """ Start the comp mode countdown by setting variables """
@@ -413,15 +443,6 @@ def map_mouse_position(pos):
 
     return (x_map, y_map)
 
-def format_game_duration(duration):
-    """ Convert a datetime.timedelta of the game duration to human readable hours, minutes, and seconds """
-    seconds = duration.total_seconds()
-    hours = seconds // 3600
-    minutes = int((seconds % 3600) // 60)
-    seconds = int(seconds % 60)
-
-    return f"{hours}h {minutes}m {seconds}s" if hours > 0 else f"{minutes}m {seconds}s" # Don't show 0 hours 
-
 try: # NEVER DO THIS!!!!!!!!
     looping = True
     tosaccept = database.get_tosaccept()
@@ -495,6 +516,21 @@ try: # NEVER DO THIS!!!!!!!!
 
                 if result is not None: # When the back button is pressed, return to main menu screen
                     active_screen = result
+
+            elif active_screen == 8: # Statistics screen, similar story to credits screen, it's just text and a button and this is ironically the easiest way to make it work
+                clicked = False
+                for event in pygame.event.get():
+                    if event.type == MOUSEBUTTONDOWN:
+                        clicked = True
+                    if event.type == QUIT:
+                        pygame.quit()
+                        sys.exit()
+
+                WINDOW.fill(Colours.BG_GREY)
+                result = screens[0].process_render_statistics_screen(pygame.mouse.get_pos(), clicked) # This handles both click processing and rendering for credits screen
+
+                if result is not None: # When the back button is pressed, return to main menu screen
+                    active_screen = result
             else:
                 """ All other screens of the main menu are processed here """
 
@@ -553,9 +589,8 @@ try: # NEVER DO THIS!!!!!!!!
                                     sound.stop_music()
                                 else:
                                     sound.play_game_music()
-                                reset_points()
-                                reset_game_vars()
                                 show_stats = database.get_stats_toggle()
+                                game_start_timestamp = datetime.datetime.now()
 
                     elif pygame.mouse.get_pressed()[0]:
                         """ The volume level adjustment menu needs to recognise click-and-drag for its sliders, therefore a separate elif clause and function are used. """
@@ -565,7 +600,7 @@ try: # NEVER DO THIS!!!!!!!!
                     pygame.quit()
                     sys.exit()
                 else:
-                    if active_screen != 3 and active_screen != 6:
+                    if active_screen != 3 and active_screen != 6 and active_screen != 8:
                         """ active_screen == 3 -> renders the game
                             active_screen == 6 -> renders the credits menu which uses a different function call
                             all other main menu screens use the same function calls so they can all follow this logic """
@@ -599,6 +634,7 @@ try: # NEVER DO THIS!!!!!!!!
                             paused = False
                         else:
                             paused = True
+                            game_pause_timestamp = datetime.datetime.now()
 
                     # Cheat keys for spawning powerups 
                     if event.key == K_1:
@@ -612,8 +648,12 @@ try: # NEVER DO THIS!!!!!!!!
                     elif event.key == K_5:
                         spawned_powerups.append(get_new_powerup(5))
 
+                    """ Not really necessary anymore
                     if event.key == K_BACKSPACE: # Shortcut to return to main menu
                         active_screen = 0 # Back to main menu
+                        reset_points()
+                        reset_game_vars(True)
+                    """
 
                 if event.type == QUIT: # This occurs when they press the X button in the window status bar
                     pygame.quit()
@@ -623,7 +663,15 @@ try: # NEVER DO THIS!!!!!!!!
                 """ PAUSE MENU """
                 
                 pygame.draw.rect(WINDOW, Colours.SCORE_GREY, pygame.Rect(350, 200, 900, 400)) # Blank surface on which to render texts & buttons
-                WINDOW.blit(score_font.render("PAUSED", True, Colours.WHITE), (610, 225))
+                WINDOW.blit(score_font.render("PAUSED", True, Colours.BALL), (610, 225))
+
+                if mode == 3:
+                    WINDOW.blit(font.render(f"First to {win_threshold} points wins", True, Colours.WHITE), (670, 320))
+                else:
+                    if casual_win_threshold <= 0:
+                        WINDOW.blit(font.render(f"Infinite game", True, Colours.WHITE), (720, 320))
+                    else:
+                        WINDOW.blit(font.render(f"Score goal: {casual_win_threshold}", True, Colours.WHITE), (710, 320))
 
                 button1 = pygame.Rect(430, 460, 220, 85)
                 button2 = pygame.Rect(930, 460, 220, 85)
@@ -637,6 +685,8 @@ try: # NEVER DO THIS!!!!!!!!
                         sound.button_click() # Sound effect
                         paused = False
                         active_screen = 0
+                        reset_points()
+                        reset_game_vars(True)
                 else:
                     pygame.draw.rect(WINDOW, Colours.WHITE, button1)
 
@@ -656,7 +706,7 @@ try: # NEVER DO THIS!!!!!!!!
                 else:               
                     pygame.draw.rect(WINDOW, Colours.WHITE, button3)
 
-                if mode != 3: # Don't show powerup related button in comp mode, where there are no powerups
+                if mode != 3 and powerups_enabled: # Don't show powerup related button in comp mode, where there are no powerups
                     if(button4.collidepoint(map_mouse_position(pygame.mouse.get_pos()))):
                         pygame.draw.rect(WINDOW, Colours.ORANGEY_YELLOW, button4)
                         if pygame.mouse.get_pressed()[0]:
@@ -773,27 +823,26 @@ try: # NEVER DO THIS!!!!!!!!
                         sound.button_click() # Sound effect
                         paused = False
                         active_screen = 0
+                        reset_points()
+                        reset_game_vars()
                         reset_comp_vars()
                 else:
                     pygame.draw.rect(WINDOW, Colours.WHITE, button1)
 
                 WINDOW.blit(font.render("Back to Menu", True, Colours.BLACK), (button1.left + 38, button1.top + 33))
 
-                WINDOW.blit(font.render(f"Total bounces: {bounces}", True, Colours.LIGHT_GREY), (950, 500))
-                WINDOW.blit(font.render(f"Game duration: {game_duration_string}", True, Colours.LIGHT_GREY), (950, 530))
+                WINDOW.blit(font.render(f"Total bounces: {bounces}", True, Colours.LIGHT_GREY), (950, 490))
+                WINDOW.blit(font.render(f"Game duration: {game_duration_string}", True, Colours.LIGHT_GREY), (950, 520))
+                WINDOW.blit(font.render(f"Total points: {player1.total_score} - {player2.total_score}", True, Colours.LIGHT_GREY), (950, 550))
 
             else:
-                """ l """
+                """ GAME LOOP """
 
                 if player1.lives <= 0:
-                    #player_who_died = 1
-                    #active_screen = 0
                     player1.lives = 3
                     player1.score = round(player1.score / 2)
                     sound.lives_run_out() # Sound effect
                 elif player2.lives <= 0:
-                    #player_who_died = 2
-                    #active_screen = 0f
                     player2.lives = 3
                     player2.score = round(player2.score / 2)
                     sound.lives_run_out() # Sound effect
@@ -856,7 +905,23 @@ try: # NEVER DO THIS!!!!!!!!
                             if impact_pos.y == -1:
                                 impact_pos.y = player2.paddle_vertical.paddle_pos.y
                             
-                            divisor = random.randint(21, 25) / 10 # Add some flavor to corner shots by hitting different parts of the paddle
+
+                            """ This can be described using the 💀 emoji
+                                The divisor determines the margin of error for the AI's aim.
+                                A larger number, in short, gives it a higher chance of missing a corner shot.
+                                Therefore, create a larger divisor more often based on the ai difficulty configured in settings
+                                It's worth noting that HARD mode effectively cannot miss, besides a few specific scenarios. 
+                            """
+                            divisor_divisor_random = random.randrange(0, 20)
+
+                            if ai_difficulty == 0 and divisor_divisor_random > 5: # 3/4 chance of bad aim on easy
+                                divisor_divisor = 15
+                            elif ai_difficulty == 1 and divisor_divisor_random > 10: # 2/4 chance of bad aim on medium
+                                divisor_divisor = 14
+                            else: # Normal accuracy
+                                divisor_divisor = 10
+
+                            divisor = random.randint(21, 25) / divisor_divisor # Add some flavor to corner shots by hitting different parts of the paddle
                             if aim_randomiser == 0:
                                 impact_pos.x -= player2.paddle_horizontal.paddle_rect.x / divisor
                                 impact_pos.y -= player2.paddle_vertical.paddle_rect.y / divisor
@@ -866,9 +931,11 @@ try: # NEVER DO THIS!!!!!!!!
 
                             repredict = False
 
+                        # Move paddles using lerp
                         new_x = renderutils.lerp(player2.paddle_horizontal.paddle_pos.x, impact_pos.x, 8/FPS)
                         new_y = renderutils.lerp(player2.paddle_vertical.paddle_pos.y, impact_pos.y, 8/FPS)
 
+                        # Cap paddle movement at their max movement speed otherwise lerp will go haywire with it 
                         if abs(player2.paddle_horizontal.paddle_pos.x - new_x) > player2.paddle_horizontal.ai_speed:
                             if new_x > player2.paddle_horizontal.paddle_pos.x:
                                 new_x = player2.paddle_horizontal.paddle_pos.x + player2.paddle_horizontal.ai_speed
@@ -890,7 +957,8 @@ try: # NEVER DO THIS!!!!!!!!
                     elif temp_ai_player != None:
                         perfect_ai(temp_ai_player)
 
-                    ball.tick()
+                    # ball.tick() returns its distance moved
+                    ball_pixels_travelled += abs(ball.tick())
 
                     # For testing
                     #ball.position.x = pygame.mouse.get_pos()[0]
@@ -1010,8 +1078,10 @@ try: # NEVER DO THIS!!!!!!!!
                             elif type(powerup) == powerups.Computer:
                                 if player_last_hit != None:
                                     powerup.collect(bounces, i, sound)
+                                    powerups_picked_up += 1
                             else:
                                 powerup.collect(bounces, i, sound)
+                                powerups_picked_up += 1
 
                 #### Powerup processing
                 delete_queue = []
@@ -1080,11 +1150,14 @@ try: # NEVER DO THIS!!!!!!!!
 
                     if player_last_hit:
                         scoring_player.score += 1
+                        scoring_player.total_score += 1
                         player_last_hit = None
                         sound.score_point() # Sound effect
 
                         if comp_ball_speedup and mode == 3:
                             comp_ball_speed += 0.005
+                    else:
+                        serves_missed += 1
 
 
                 if player1.score >= win_threshold:
@@ -1097,7 +1170,7 @@ try: # NEVER DO THIS!!!!!!!!
                 if mode == 3 and comp_won:
 
                     game_duration = datetime.datetime.now() - game_start_timestamp
-                    game_duration_string = format_game_duration(game_duration)
+                    game_duration_string = renderutils.format_timedelta(game_duration)
 
                     sound.win_jingle()
                     sound.stop_music()
@@ -1144,6 +1217,7 @@ try: # NEVER DO THIS!!!!!!!!
                 #WINDOW.blit(font.render("Blue Lives: " + str(player1.lives), True, Colours.GREY), (1000, 850))
                 #WINDOW.blit(font.render("Orange Lives: " + str(player2.lives), True, Colours.GREY), (970, 875))
                 
+                #pygame.draw.circle(WINDOW, Colours.WHITE, (impact_pos.x, impact_pos.y), 5)
 
         if database.get_resolution() != max_resolution:
             WINDOW_scaled = pygame.transform.scale(WINDOW, SCREEN.get_size())
