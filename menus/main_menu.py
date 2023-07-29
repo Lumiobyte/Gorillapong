@@ -5,12 +5,14 @@ import os
 import datetime
 
 from menus import button, force_restart
-from utils import database, renderutils
+from utils import database, renderutils, position
 from utils.colours import Colours
 
 class MainMenu():
 
-    def __init__(self, window, display_screen, title, sound):
+    def __init__(self, window, display_screen, title, sound, tm):
+        """ Setup main menu variables """
+
         self.screen = window
         self.screen_title = title
         self.display_screen = display_screen
@@ -18,7 +20,9 @@ class MainMenu():
         self.font = pygame.font.SysFont(None, 48)
         self.small_font = pygame.font.SysFont(None, 32)
 
-        self.sound = sound
+        self.tm = tm # Use telemetry instance from main
+
+        self.sound = sound # Use the instance of sound class from MAIN...
 
         self.last_pos = (50, 50) # debug feature
 
@@ -26,6 +30,7 @@ class MainMenu():
         # poigaim.image.lode()
         self.gorilla_ball = pygame.image.load('image/gorilla.png')
 
+        # Load up configured settings so they can be displayed in the settings menu
         data = database.get_music_sound()
         if data[0] == True:
             music_btn_colour = Colours.ENABLED_GREEN
@@ -42,6 +47,7 @@ class MainMenu():
         else:
             stats_btn_colour = Colours.LIGHT_PASTEL_RED
 
+        # Buttons and texts for settings menu
         if self.screen_title == "Settings":
             self.buttons = [
                 button.Button(self.screen, stats_btn_colour, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(340, 300), 60, 60, "", 1005, False),
@@ -52,7 +58,8 @@ class MainMenu():
 
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-450, -80), 200, 60, "1600x900", 1000),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-450, 0), 200, 60, "1280x720", 1001),
-                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-450, 80), 200, 60, "Fullscreen", 999),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-450, 80), 200, 60, "1024x576", 990),
+                button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-450, 160), 200, 60, "Fullscreen", 999),
 
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(390, -100), 130, 60, "Casual", 1010),
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(540, -100), 130, 60, "Comp", 1011)
@@ -65,6 +72,7 @@ class MainMenu():
                 ["Toggle sound", Colours.WHITE, self.__calc_position(10, -30), self.small_font],
                 ["Show stats for nerds", Colours.WHITE, self.__calc_position(500, 300), self.small_font]
             ]
+        # Buttons and texts for main menu
         else:
             self.buttons = [
                 button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-160, -80), 285, 100, "AI Showdown", 5),
@@ -78,7 +86,7 @@ class MainMenu():
             ]
             self.texts = []
 
-        # Only for settings menu but putting them here is an easy way to fix errors
+        # Buttons and texts for the gameplay settings panel 
         self.variant_0_texts = [
             ["Score goal:", Colours.WHITE, self.__calc_position(310, 0), self.small_font],
             ["Ball speed:", Colours.WHITE, self.__calc_position(310, 60), self.small_font],
@@ -109,6 +117,8 @@ class MainMenu():
 
         #self.info_text_font = pygame.font.SysFont()
         self.hovered_button = 0
+
+        # Informational texts for menus
         self.info_texts = {
             0: "",
             5: "Watch two bots face off in an epic Double Pong 1v1!",
@@ -118,6 +128,7 @@ class MainMenu():
             -1: "Sorry to see you go :(",
             6: "See the wonderful people behind the game!",
             8: "Lifetime statistics from all play sessions",
+            990: "Change resolution to 1024x576",
             1000: "Change resolution to 1600x900",
             1001: "Change resolution to 1280x720",
             999: "Use Fullscreen mode (BETA)",
@@ -138,14 +149,16 @@ class MainMenu():
             2103: "Enable the ball speed to slowly increase over time"
         }
 
-        self.gameplay_settings_menu_variant = 0 # 0 = casual, 1 = comp
+        self.gameplay_settings_menu_variant = 0 # Indicates which settings to display on the gameplay settings panel
 
         self.credits_back_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(700, 400), 180, 80, "Back", 0)
 
+        # Get configured settings to display
         data = database.get_volume()
         self.music_vol = data[0]
         self.sound_vol = data[1]
 
+        # Variables for adjust volume menu sliders
         self.adjust_volume_menu = False
         w = 300
         h = 60
@@ -159,10 +172,11 @@ class MainMenu():
             button.Button(self.screen, Colours.SCORE_GREY, Colours.DARK_GREEN, self.__calc_position(0, -70), 52, 52, "", 1006)
         ]
 
+        # Pre-configure buttons so they're ready when the user first enters the menu
         self.__position_slider_buttons()
         self.__setup_gameplay_setting_buttons()
 
-        self.version = "v0.17"
+        self.version = "v1.0"
         self.version_text = self.font.render(self.version, True, Colours.WHITE)
 
         self.slider_texts = [
@@ -171,19 +185,30 @@ class MainMenu():
         ]
         self.back_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(0, 210), 240, 100, "Back", 1)
 
+        # Options for mode-specific playtime selection on stats menu
         self.stats_screen_playtime_options = ['total', 'ai vs ai', 'player vs ai', 'multiplayer', 'competitive']
         self.playtime_selected = 0
 
+        # Variables for ball easter egg
+        self.ball_clicked = False
+        self.ball_speed = -6
+        self.ball_left_top = position.Position(*self.__calc_position(-107, -364)) # -107, 364 is center
+        self.ball_trigger_rect = pygame.Rect(self.ball_left_top.x, self.ball_left_top.y, 30, 30)
+        self.last_click_pos = (0, 0)
+
 
     def process_position(self, pos, clicked = False): # Execute actions for clicks directed to this menu
+        """ Processes mouse position and clicks for buttons on main menu, settings menu, and adjust volume menu. """
 
-        if self.adjust_volume_menu:
+        if self.adjust_volume_menu: # Needs different logic since it has sliders
             collided, action = self.back_button.check_collision(self.__map_mouse_position(pos))
             if collided:
                 self.back_button.hover()
 
                 if clicked:
                     self.sound.button_click() # Sound effect
+                    self.tm.click(action)
+
                     if action == 1:
                         self.adjust_volume_menu = False 
                         database.set_volume("music_vol", self.music_vol)
@@ -197,6 +222,7 @@ class MainMenu():
                     btn.hover()
 
                     if clicked:
+                        self.tm.click(action)
                         self.sound.button_click() # Sound effect
                     
             if clicked:
@@ -207,8 +233,13 @@ class MainMenu():
 
             self.hovered_button = 0
 
+            if clicked and self.ball_clicked is False and self.ball_trigger_rect.collidepoint(pos): # Check for click on the ball for easter egg
+                self.ball_clicked = True
+                self.tm.click(5013)
+                self.sound.bounce()
+
             for btn in self.buttons:
-                if database.get_resolution() != database.get_max_resolution(): # Max res value in database again
+                if database.get_resolution() != database.get_max_resolution():
                     collided, action = btn.check_collision(self.__map_mouse_position(pos))
                 else:
                     collided, action = btn.check_collision(pos)
@@ -219,8 +250,13 @@ class MainMenu():
 
                     self.hovered_button = btn.button_action
 
-                    if clicked:
+                    if clicked: # If the mouse is colliding with a button and was clicked, execute the appropriate action
                         self.sound.button_click() # Sound effect
+                        self.tm.click(action)
+
+                        if action == 0:
+                            self.tm.gamesettings() # They're exiting out of the settings menu, so log their configuration
+
                         if action == 999:
                             database.set_resolution((0, 0))
                             force_restart.force_restart("Resolution has been updated to Fullscreen")
@@ -230,6 +266,9 @@ class MainMenu():
                         elif action == 1001:
                             database.set_resolution((1280, 720))
                             force_restart.force_restart("Resolution has been updated to 1280x720")
+                        elif action == 990:
+                            database.set_resolution((1024, 576))
+                            force_restart.force_restart("Resolution has been updated to 1024x576")
                         elif action == 1002:
                             value = database.toggle_music_sound("music")
                             self.sound.reinit()
@@ -276,6 +315,8 @@ class MainMenu():
                 return None, False
             
     def __process_gameplay_settings_button(self, btn, pos, clicked):
+        """ Button processing for gameplay setting buttons specifically. """
+
         if database.get_resolution() != database.get_max_resolution(): # Max res value in database again
             collided, action = btn.check_collision(self.__map_mouse_position(pos))
         else:
@@ -287,6 +328,7 @@ class MainMenu():
 
             if clicked:
                 self.sound.button_click()
+                self.tm.click(action)
 
                 if action == 2000:
                     new_title = database.change_gameplay_setting("casual_score_goal")
@@ -312,6 +354,7 @@ class MainMenu():
             
             
     def process_hold(self, pos):
+        """ Process a click and drag on sliders. """
         if self.adjust_volume_menu:
             pos = self.__map_mouse_position(pos)
             for i, btn in enumerate(self.slider_buttons):
@@ -319,18 +362,17 @@ class MainMenu():
 
                 if collided:
                     btn.hover()
-                    #self.sound.button_click() # Sound effect
 
-                    new_btn_pos = [pos[0], btn.center[1]]
+                    new_btn_pos = [pos[0], btn.center[1]] # Only follow mouse horizontally
                     limit_left = (self.slider_boxes[i].left + 5 + (btn.w / 2))
                     limit_right = ((self.slider_boxes[i].left + self.slider_boxes[i].width) - 5 - (btn.w / 2))
-                    if new_btn_pos[0] < limit_left:
+                    if new_btn_pos[0] < limit_left: # Limit slider button to the slider range
                         new_btn_pos[0] = limit_left
                     elif new_btn_pos[0] > limit_right:
                         new_btn_pos[0] = limit_right
 
-                    btn.move(new_btn_pos)
-                    vol = self.__pos_to_volume(btn, self.slider_boxes[i], (limit_left, limit_right))
+                    btn.move(new_btn_pos) # Move the button 
+                    vol = self.__pos_to_volume(btn, self.slider_boxes[i], (limit_left, limit_right)) # Convert button's position to a volume
 
                     if action == 1005:
                         self.music_vol = vol
@@ -339,6 +381,7 @@ class MainMenu():
 
 
     def render(self): # Return render for this menu
+        """ Render buttons and texts for main menu, settings menu, and adjust volume menu """
 
         if self.adjust_volume_menu:
             text = self.font.render("Adjust Volume", True, Colours.WHITE)
@@ -353,50 +396,69 @@ class MainMenu():
 
             self.back_button.render()
         else:
+            # Background and title
             self.screen.blit(self.version_text, (20, 850))
             text = self.title_font.render(self.screen_title, True, Colours.WHITE)
             self.screen.blit(text, text.get_rect(center = self.__calc_position(0, -350)))
-            if self.screen_title == "Gorillapong":
-                self.screen.blit(self.gorilla_ball, (self.__calc_position(-107, -364)))
 
+            # Render all screen buttons and texts
             for btn in self.buttons:
                 btn.render()
             
-            for text in self.texts: # 0: the text itself, 1: text colour, 2: text position (already centered), 3: font object
+            for text in self.texts: # self.texts ontains, at index 0: the text itself, index 1: text colour, index 2: text position (already centered), index 3: font object
                 r_text = text[3].render(text[0], True, text[1])
                 self.screen.blit(r_text, r_text.get_rect(center = text[2]))
 
             info_text = self.small_font.render(self.info_texts[self.hovered_button], True, Colours.WHITE)
             self.screen.blit(info_text, info_text.get_rect(center = self.__calc_position(0, 400)))
 
-            if self.screen_title == "Settings":
+            if self.screen_title == "Gorillapong" and self.ball_left_top.y < 900:
+                self.screen.blit(self.gorilla_ball, (self.ball_left_top.x, self.ball_left_top.y))
 
+            if self.screen_title == "Settings": # Settings screen has some unique UI elements which are drawn here
+
+                # Selected resolution indicator
                 res = database.get_resolution()
                 if res == 0:
-                    pygame.draw.rect(self.screen, Colours.ENABLED_GREEN, pygame.Rect(self.buttons[7].button_rect.left - 5, self.buttons[7].button_rect.top - 5, 210, 70), 5)
+                    pygame.draw.rect(self.screen, Colours.ENABLED_GREEN, pygame.Rect(self.buttons[8].button_rect.left - 5, self.buttons[8].button_rect.top - 5, 210, 70), 5)
                 elif res == (1600, 900):
                     pygame.draw.rect(self.screen, Colours.ENABLED_GREEN, pygame.Rect(self.buttons[5].button_rect.left - 5, self.buttons[5].button_rect.top - 5, 210, 70), 5)
                 elif res == (1280, 720):
                     pygame.draw.rect(self.screen, Colours.ENABLED_GREEN, pygame.Rect(self.buttons[6].button_rect.left - 5, self.buttons[6].button_rect.top - 5, 210, 70), 5)
+                elif res == (1024, 576):
+                    pygame.draw.rect(self.screen, Colours.ENABLED_GREEN, pygame.Rect(self.buttons[7].button_rect.left - 5, self.buttons[7].button_rect.top - 5, 210, 70), 5)
 
+                # Gameplay settings panel & buttons
                 pygame.draw.rect(self.screen, Colours.SCORE_GREY, pygame.Rect(1070, 415, 400, 285))
                 if self.gameplay_settings_menu_variant == 0:
-                    pygame.draw.polygon(self.screen, Colours.SCORE_GREY, ((1165, 415), (1215, 415), (1190, 390)))
+                    pygame.draw.polygon(self.screen, Colours.SCORE_GREY, ((1165, 415), (1215, 415), (1190, 390))) # Triangle to indicate that this menu is selected
                     for text in self.variant_0_texts:
                         self.screen.blit(text[3].render(text[0], True, text[1]), text[2])
                     for btn in self.variant_0_buttons:
                         btn.render()
                 else:
-                    pygame.draw.polygon(self.screen, Colours.SCORE_GREY, ((1315, 415), (1365, 415), (1340, 390)))
+                    pygame.draw.polygon(self.screen, Colours.SCORE_GREY, ((1315, 415), (1365, 415), (1340, 390))) # Triangle to indicate that this menu is selected
                     for text in self.variant_1_texts:
                         self.screen.blit(text[3].render(text[0], True, text[1]), text[2])
                     for btn in self.variant_1_buttons:
                         btn.render()
 
+            # Logic for ball easter egg
+            if self.ball_clicked and self.ball_left_top.y < 900: # Ball falls offscreen after a small bounce upwards
+                self.ball_left_top.y += self.ball_speed
+                if self.ball_speed < 0:
+                    if self.ball_speed < -1:
+                        self.ball_speed *= 0.955
+                    else:
+                        self.ball_speed = 0.5
+                elif self.ball_speed < 7:
+                    self.ball_speed *= 1.04
+
             #pygame.draw.circle(self.screen, Colours.PURPLE, (self.last_pos[0], self.last_pos[1]), radius=5) # DEBUG DOT 
 
     def process_render_credits_screen(self, pos, clicked = False):
-        
+        """ Custom click processing and render loop for the credits screen """
+
         text = self.font.render("Credits", True, Colours.ORANGEY_YELLOW)
         self.screen.blit(text, text.get_rect(center = self.__calc_position(-200, -135)))
 
@@ -415,17 +477,17 @@ class MainMenu():
         self.screen.blit(self.font.render("Freesound Contributors", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(0, 170))
         self.screen.blit(self.small_font.render("game music and sound effects", True, Colours.WHITE), self.__calc_position(0, 205))
         
-        #freesound_credits_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(40, 245), 80, 30, "see all", 0, font = self.small_font)
         freesound_credits_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(450, 185), 90, 30, "see all", 0, font = self.small_font)
 
-        #self.screen.blit(self.font.render(f"Gorillapong {self.version}", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(0, 180))
         self.screen.blit(self.small_font.render(f"Gorillapong {self.version}", True, Colours.WHITE), self.__calc_position(-257, -115))
 
+        # Button processing
         if self.credits_back_button.check_collision(self.__map_mouse_position(pos))[0]:
             self.credits_back_button.hover()
 
             if clicked:
                 self.sound.button_click() # Sound effect
+                self.tm.click(0)
                 return 0
             
         if freesound_credits_button.check_collision(self.__map_mouse_position(pos))[0]:
@@ -433,6 +495,7 @@ class MainMenu():
 
             if clicked:
                 self.sound.button_click() # Sound effect
+                self.tm.click(5000)
                 try:
                     os.startfile('sound_credits.txt')
                 except:
@@ -445,10 +508,11 @@ class MainMenu():
         return None
     
     def process_render_statistics_screen(self, pos, clicked):
+        """ Custom click processing and render loop for statistics screen """
 
         statistics = database.get_all_stats()
 
-        playtimes = [
+        playtimes = [ # Setup the mode-specific playtimes so that they can simply be accessed with a list index stored in self.playtime_selected
             renderutils.format_timedelta(datetime.timedelta(seconds = statistics['total_playtime'])),
             renderutils.format_timedelta(datetime.timedelta(seconds = statistics['playtime_0'])),
             renderutils.format_timedelta(datetime.timedelta(seconds = statistics['playtime_1'])),
@@ -456,6 +520,7 @@ class MainMenu():
             renderutils.format_timedelta(datetime.timedelta(seconds = statistics['playtime_3']))
         ]
 
+        # Render texts..
         text = self.font.render("Statistics", True, Colours.ORANGEY_YELLOW)
         self.screen.blit(text, text.get_rect(center = self.__calc_position(0, -350)))
 
@@ -481,11 +546,13 @@ class MainMenu():
         playtime_gamemode_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-320, -185), 150, 30, self.stats_screen_playtime_options[self.playtime_selected], 0, font = self.small_font)
         reset_stats_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_RED, self.__calc_position(-630, 400), 320, 80, "Reset Statistics", 0)
 
+        # Process buttons..
         if self.credits_back_button.check_collision(self.__map_mouse_position(pos))[0]:
             self.credits_back_button.hover()
 
             if clicked:
                 self.sound.button_click() # Sound effect
+                self.tm.click(0)
                 return 0
             
         
@@ -494,6 +561,7 @@ class MainMenu():
 
             if clicked:
                 self.sound.button_click() # Sound effect
+                self.tm.click(5001)
                 self.playtime_selected += 1
                 if self.playtime_selected > 4:
                     self.playtime_selected = 0
@@ -502,6 +570,7 @@ class MainMenu():
             reset_stats_button.hover()
 
             if clicked:
+                self.tm.click(5002)
                 self.sound.button_click() # Sound effect
                 database.reset_stats()
     
@@ -512,6 +581,9 @@ class MainMenu():
         return None
     
     def __setup_gameplay_setting_buttons(self):
+        """ The configuration of each gameplay setting is displayed on its button. 
+            This will set each gameplay setting button's text to its current selected configuration. """
+
         counter = 0
         for setting_title in database.get_all_gameplay_settings():
             if counter > 3:
@@ -525,6 +597,8 @@ class MainMenu():
             counter += 1
 
     def __prep_volume_menu(self):
+        """ Colour the texts according to whether the sound is enabled or disabled, and call self.__position_slider_buttons()"""
+
         self.slider_texts = []
         result = database.get_music_sound()
         if result[0]:
@@ -539,6 +613,7 @@ class MainMenu():
         self.__position_slider_buttons()
 
     def __position_slider_buttons(self):
+        """ Position the sliders according to the configured volume level """
 
         data = database.get_volume()
 
@@ -551,27 +626,29 @@ class MainMenu():
         ]
 
     def __pos_to_volume(self, button, slider, limits):
+        """ Convert the position of a slider button to a volume level between 0 and 1. """
+        
         coord_range = limits[1] - limits[0]
-
-        #vol = 1 / ((button.center[0] - limits[1]) + 0.1)
-
         vol = 0.0 + ((1.0 - 0.0) / (coord_range)) * (button.center[0] - limits[0])
         
         return round(vol, 3)
     
     def __volume_to_pos(self, vol, limits):
+        """ Convert a volume level between 0 and 1 to a valid position on the slider, where the slider button will be rendered."""
+        
         coord_range = limits[1] - limits[0]
-
         vol = limits[0] + ((coord_range) / (1.0 - 0.0)) * (vol - 0.0)
 
         return round(vol)
 
     def __calc_position(self, w, h):
+        """ Return a position that is (w, h) away from the center point of the screen. """
+
         return ((self.screen.get_width() / 2) + w, (self.screen.get_height() / 2) + h)
     
     # Should make the database have a max res value so that these aren't hardcoded
     def __map_mouse_position(self, pos):
-        #output_start + ((output_end - output_start) / (input_end - input_start)) * (input - input_start)
+        """ Map the position of the mouse from the display window (which could be larger or smaller than 1600x900) to its relative position on the internal 1600x900 window. """
 
         if self.display_screen:
             res = self.display_screen.get_size()

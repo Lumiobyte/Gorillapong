@@ -182,7 +182,8 @@ def get_all_gameplay_settings(titles = True):
         for setting in gameplay_setting_text_map:
             if titles:
                 if gameplay_setting_text_map[setting] is None:
-                    values.append(str(data[setting]))
+                    val = str(data[setting])
+                    values.append(val if val != "0" else "Infinite") # When the target score is 0, there is no win condition, so show "infinite" on the button
                 else:
                     values.append(gameplay_setting_text_map[setting][data[setting]])
             else:

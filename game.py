@@ -1,42 +1,3 @@
-# Double Pong
-# The ball is got gorilla
-# When gorilla collect banana, player's paddle can get bigger
-# Gorilla ball will change colour depending on whose bounce it is 
-
-#pineapple: ball speed faster
-#spinach: bigger paddle for some time
-#dragonfruit: shoot flame for a strong bounce
-#cherry: creates clone of the ball and enemy has to bounce both balls, clone will disappear after some time
-#apple: creates apple pillars which ball bounces of
-#carrot: choose the direction to shoot
-#banana: harder to control paddles for opponent 
-#mango: switches the keys for the paddles
-#pringles: pringles can spawns where it is picked up
-#sushi: makes ball wrapped in seaweed - big rectangle
-#popcorn: drops exploding popping popcorn bomb, and if it blows up next to monkey ball, it gets shot off in a direction away from the explosion
-#pickle: puts the monkey in a jar, shatters when it hits the next paddle, stuns the paddle for a while
-#paint: paint leaves a trail from the ball..
-#coffee bean: paddles move faster
-#cocoa: everything slow down
-#starfruit: shoots out 5 stars in each direction, each star will become a different power up after some time. :thumbsup:
-#water: big water bottle that creats a big pool water, and when ball in the water it gets slower. 
-#fanta: its orange water that makes the ball goes FASTER............../...
-#milk: it spawns a herd of cows that opponent will play breakout with
-#adidas: spawn a tick
-#celery: spinning paddle celery paddle that spin around 
-
-#score: score
-# lives: 3 lives for the plaaaaaaaaaaayr
-
-#score gained from hitting power ups.....
-#
-
-
-# TODO:
-# - bg for main menu
-# - banananators in the ai games
-
-
 import pygame
 from pygame.locals import *
 import sys
@@ -44,11 +5,21 @@ from dataclasses import dataclass
 import random
 import traceback
 import datetime
+import math
 
 from utils.colours import Colours
-from utils import renderutils, database
+from utils import renderutils, database, telemetry
 
 pygame.init()
+
+print("""
+   \||/
+   \||/
+ .<><><>.
+.<><><><>.
+'<><><><>'
+ '<><><>'""")
+
 BACKGROUND = (28, 28, 28)
 FPS = 147
 clock = pygame.time.Clock()
@@ -68,7 +39,10 @@ else:
 pygame.display.set_caption("Gorilla Pong")
 pygame.display.set_icon(pygame.image.load('image/gorilla.png'))
 
-bg_image = pygame.transform.scale(pygame.image.load('image/bg_dark.png'), (WINDOW.get_width(), WINDOW.get_height()))
+bg_normal = pygame.transform.scale(pygame.image.load('image/bg_dark.png'), (WINDOW.get_width(), WINDOW.get_height()))
+bg_easteregg = pygame.transform.scale(pygame.image.load('image/bg_gorilla.png'), (WINDOW.get_width(), WINDOW.get_height()))
+
+bg_image = bg_normal
 
 """ This is unnecessary, since resolution can only be switched on the main menu and doing so forces a game restart.
 def switch_resolution(new_res):
@@ -86,6 +60,10 @@ def switch_resolution(new_res):
 
 #####
 
+tm = telemetry.TelemetryModule() # Create telemetry instance 
+
+#####
+
 from utils import audio # Import and initialise audio controller
 sound = audio.Audio() 
 
@@ -93,8 +71,8 @@ sound = audio.Audio()
 screens = []
 
 import menus.main_menu as main_menu # Import and initialise the UI controllers 
-screens.append(main_menu.MainMenu(WINDOW, SCREEN, "Gorillapong", sound))
-screens.append(main_menu.MainMenu(WINDOW, SCREEN, "Settings", sound))
+screens.append(main_menu.MainMenu(WINDOW, SCREEN, "Gorillapong", sound, tm))
+screens.append(main_menu.MainMenu(WINDOW, SCREEN, "Settings", sound, tm))
 
 paused = False # When true, run the pause menu loop instead of the game loop
 
@@ -139,8 +117,8 @@ game_start_timestamp = None
 game_pause_timestamp = None
 game_duration = None
 game_duration_string = None
-comp_won = False
-comp_winner = None
+game_won = False
+game_winner = None
 win_threshold = 25 # Make it configurable
 countdown_started = False
 countdown_counter = 3
@@ -184,9 +162,8 @@ repredict = True # Allow AI to make another prediction as to where the ball will
 
 #####
 
-import math
-
 def set_paddle_sprite_for_player(player, activation = False):
+    """ Switch the sprites for a player's paddles between normal and terminator version """
     player.paddle_vertical.swap_sprites(activation)
     player.paddle_horizontal.swap_sprites(activation)
 
@@ -250,14 +227,15 @@ def collision(rleft, rtop, width, height,   # Rect coords
     return False  # No collision detected
 
 def reset_comp_vars():
-    global comp_won
-    global comp_winner
+    """ Reset variables related to competitive gamemode """
+    global game_won
+    global game_winner
     global comp_started
     global countdown_started
     global countdown_counter
 
-    comp_won = False
-    comp_winner = None
+    game_won = False
+    game_winner = None
     comp_started = False
     countdown_started = False
     countdown_counter = 3
@@ -471,7 +449,7 @@ try: # NEVER DO THIS!!!!!!!!
                 WINDOW.blit(font.render("- resolution, audio settings, gameplay settings", True, Colours.WHITE), (420, 460))
                 WINDOW.blit(font.render("- game launches, button clicks, game sessions, errors", True, Colours.WHITE), (420, 485))
                 WINDOW.blit(font.render("Do you want to proceed?", True, Colours.LIGHT_PASTEL_GREEN), (400, 560))
-                WINDOW.blit(font.render("You may opt out at any time by accessing save.json and modifying \"tosaccept\" to false", True, Colours.SCORE_GREY), (380, 720))
+                WINDOW.blit(font.render("You may revoke authorisation at any time by accessing save.json and modifying \"tosaccept\" to false", True, Colours.SCORE_GREY), (360, 720))
 
                 button1 = pygame.Rect(990, 600, 220, 85)
                 button2 = pygame.Rect(390, 600, 220, 85)
@@ -486,6 +464,9 @@ try: # NEVER DO THIS!!!!!!!!
                         sound.button_click() # Sound effect
                         database.accept_tos()
                         tosaccept = True
+                        tm.sysinfo()
+                        tm.gamesettings()
+                        tm.click(5004)
                 else:
                     pygame.draw.rect(WINDOW, Colours.WHITE, button1)
 
@@ -540,9 +521,11 @@ try: # NEVER DO THIS!!!!!!!!
                 for event in pygame.event.get():
 
                     if event.type == KEYDOWN:
-                        if event.key == K_7:
-                            tosaccept = False
-                            database.accept_tos(False)
+                        if event.key == K_7 and bg_image != bg_easteregg: # Easter egg
+                            #tosaccept = False
+                            #database.accept_tos(False)
+                            bg_image = bg_easteregg
+                            tm.click(5012)
                     elif event.type == MOUSEBUTTONDOWN:
                         result, ai_toggle = screens[active_screen].process_position(event.pos, True)
                         if result != None:
@@ -568,7 +551,7 @@ try: # NEVER DO THIS!!!!!!!!
                             if active_screen == 5: # AI vs AI mode
                                 player1_ai = True
                                 active_screen = 3
-                                mode = 0
+                                mode = 0 # AI vs AI mode
                                 set_paddle_sprite_for_player(player2, True)
                                 set_paddle_sprite_for_player(player1, True)
                             elif active_screen == 7: # Comp mode
@@ -601,17 +584,14 @@ try: # NEVER DO THIS!!!!!!!!
                     sys.exit()
                 else:
                     if active_screen != 3 and active_screen != 6 and active_screen != 8:
-                        """ active_screen == 3 -> renders the game
-                            active_screen == 6 -> renders the credits menu which uses a different function call
+                        """ active_screen == 3 -> renders the game, so run the game loop
+                            active_screen == 6 -> renders the credits menu, using its specific function
+                            active_screen == 8 -> renders statistics menu, using its specific function, similar to credits
                             all other main menu screens use the same function calls so they can all follow this logic """
                         screens[active_screen].process_position(pygame.mouse.get_pos())
                         if active_screen != 0:
                             WINDOW.fill(BACKGROUND)
                         screens[active_screen].render()
-
-                        # Legacy death system, to be removed
-                        if player_who_died != 0:
-                            WINDOW.blit(font.render(f"Player {player_who_died} died!", True, Colours.WHITE), (600, 300))
 
                         sound.play_menu_music() # The sound controller keeps track and ensures duplicate music will not be played even if this is called many times
 
@@ -622,8 +602,8 @@ try: # NEVER DO THIS!!!!!!!!
             last_frame_ticks = current_frame_ticks
             current_frame_ticks = pygame.time.get_ticks()
             time_delta = (current_frame_ticks - last_frame_ticks)
-            if time_delta > 800:
-                time_delta = 1 # Prevents breakage of menu delays 
+            if time_delta > 800: # Hopefully nobody's FPS is so low that the timedelta between frames is legitimately 800 
+                time_delta = 1 # Prevents breakage of menu delays in case of a lag spike
 
             ##################################################
 
@@ -635,18 +615,11 @@ try: # NEVER DO THIS!!!!!!!!
                         else:
                             paused = True
                             game_pause_timestamp = datetime.datetime.now()
+                            tm.session("PAUSE", mode, game_pause_timestamp - game_start_timestamp, player1.score, player2.score, bounces, serves_missed)
 
                     # Cheat keys for spawning powerups 
                     if event.key == K_1:
                         spawned_powerups.append(get_new_powerup(1))
-                    elif event.key == K_2:
-                        spawned_powerups.append(get_new_powerup(2))
-                    elif event.key == K_3:
-                        spawned_powerups.append(get_new_powerup(3))
-                    elif event.key == K_4:
-                        spawned_powerups.append(get_new_powerup(4))
-                    elif event.key == K_5:
-                        spawned_powerups.append(get_new_powerup(5))
 
                     """ Not really necessary anymore
                     if event.key == K_BACKSPACE: # Shortcut to return to main menu
@@ -687,6 +660,7 @@ try: # NEVER DO THIS!!!!!!!!
                         active_screen = 0
                         reset_points()
                         reset_game_vars(True)
+                        tm.click(5005)
                 else:
                     pygame.draw.rect(WINDOW, Colours.WHITE, button1)
 
@@ -695,6 +669,7 @@ try: # NEVER DO THIS!!!!!!!!
                     if pygame.mouse.get_pressed()[0]:
                         sound.button_click() # Sound effect
                         paused = False
+                        tm.click(5006)
                 else:               
                     pygame.draw.rect(WINDOW, Colours.WHITE, button2)
 
@@ -703,6 +678,7 @@ try: # NEVER DO THIS!!!!!!!!
                     if pygame.mouse.get_pressed()[0]:
                         sound.button_click() # Sound effect
                         reset_ball()
+                        # Unfortunately cannot telemetry log, risk of spamming
                 else:               
                     pygame.draw.rect(WINDOW, Colours.WHITE, button3)
 
@@ -712,6 +688,7 @@ try: # NEVER DO THIS!!!!!!!!
                         if pygame.mouse.get_pressed()[0]:
                             sound.button_click() # Sound effect
                             clear_powerups(True)
+                            # Unfortunately cannot telemetry log, risk of spamming
                     else:               
                         pygame.draw.rect(WINDOW, Colours.WHITE, button4)
 
@@ -786,6 +763,7 @@ try: # NEVER DO THIS!!!!!!!!
                             sound.button_click() # Sound effect
                             paused = False
                             active_screen = 0
+                            tm.click(5009)
                     else:
                         pygame.draw.rect(WINDOW, Colours.WHITE, button1)
 
@@ -793,17 +771,18 @@ try: # NEVER DO THIS!!!!!!!!
                         pygame.draw.rect(WINDOW, Colours.LIGHT_PASTEL_GREEN, button2)
                         if pygame.mouse.get_pressed()[0] and delay <= 0:
                             start_countdown()
+                            tm.click(5010)
                     else:
                         pygame.draw.rect(WINDOW, Colours.WHITE, button2)
 
                     WINDOW.blit(font.render("Back to Menu", True, Colours.BLACK), (button1.left + 38, button1.top + 33))
                     WINDOW.blit(font.render("LET'S GO!", True, Colours.BLACK), (button2.left + 57, button2.top + 33))
 
-            elif mode == 3 and comp_won:
-                """ WIN SCREEN FOR COMPETITIVE GAME """
+            elif game_won:
+                """ WIN SCREEN """
 
                 pygame.draw.rect(WINDOW, Colours.SCORE_GREY, pygame.Rect(350, 200, 900, 400))
-                WINDOW.blit(score_font.render(comp_winner.name.upper(), True, comp_winner.colour), (450, 230))
+                WINDOW.blit(score_font.render(game_winner.name.upper(), True, game_winner.colour), (450, 230))
                 WINDOW.blit(font.render("has won the game!", True, Colours.WHITE), (900, 280))
 
                 if player1.score > 9: # If the score is less than 10, render the single digit further to the right so it doesn't look asymmetrical 
@@ -826,6 +805,7 @@ try: # NEVER DO THIS!!!!!!!!
                         reset_points()
                         reset_game_vars()
                         reset_comp_vars()
+                        tm.click(5011)
                 else:
                     pygame.draw.rect(WINDOW, Colours.WHITE, button1)
 
@@ -1160,17 +1140,26 @@ try: # NEVER DO THIS!!!!!!!!
                         serves_missed += 1
 
 
-                if player1.score >= win_threshold:
-                    comp_won = True
-                    comp_winner = player1
-                elif player2.score >= win_threshold:
-                    comp_won = True
-                    comp_winner = player2
+                if mode == 3:
+                    if player1.score >= win_threshold:
+                        game_won = True
+                        game_winner = player1
+                    elif player2.score >= win_threshold:
+                        game_won = True
+                        game_winner = player2
+                elif casual_win_threshold > 0:
+                    if player1.score >= casual_win_threshold:
+                        game_won = True
+                        game_winner = player1
+                    elif player2.score >= casual_win_threshold:
+                        game_won = True
+                        game_winner = player2
 
-                if mode == 3 and comp_won:
-
+                if game_won:
                     game_duration = datetime.datetime.now() - game_start_timestamp
                     game_duration_string = renderutils.format_timedelta(game_duration)
+
+                    tm.session("FINISH", mode, game_duration, player1.score, player2.score, bounces, serves_missed)
 
                     sound.win_jingle()
                     sound.stop_music()
@@ -1233,6 +1222,7 @@ try: # NEVER DO THIS!!!!!!!!
 except Exception as e: # worst error handling method 
 
     print(traceback.print_exc())
+    tm.error(str(e), traceback.print_exc())
 
     while True:
         for event in pygame.event.get():

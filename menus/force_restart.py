@@ -26,9 +26,9 @@ def force_restart(note):
 
         screen.fill(Colours.BG_GREY)
 
-        screen.blit(font.render("It is necessary to restart the game.", True, Colours.PLAYER_RED), (500, 300))
-        screen.blit(font.render("Press ESC key to exit the game.", True, Colours.WHITE), (500, 350))
-        screen.blit(font.render(note, True, Colours.PLAYER_GREEN), (500, 450))
+        screen.blit(font.render("It is necessary to restart the game.", True, Colours.PLAYER_RED), (50, 100))
+        screen.blit(font.render("Press ESC key to exit the game.", True, Colours.WHITE), (50, 140))
+        screen.blit(font.render(note, True, Colours.PLAYER_GREEN), (50, 240))
 
         pygame.display.update()
         clock.tick(147)

@@ -37,7 +37,7 @@ def lerp(a, b, c):
 def format_timedelta(duration):
     """ Convert a datetime.timedelta to human readable hours, minutes, and seconds """
     seconds = duration.total_seconds()
-    hours = seconds // 3600
+    hours = int(seconds // 3600)
     minutes = int((seconds % 3600) // 60)
     seconds = int(seconds % 60)
 

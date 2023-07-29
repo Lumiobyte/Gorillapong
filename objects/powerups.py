@@ -8,6 +8,8 @@ from utils.position import Position
 
 class Pineapple():
     def __init__(self, screen):
+        """ Setup variables, import and scale sprite """
+
         self.screen = screen
 
         self.position = Position(random.randrange(300, 1300), random.randrange(200, 600))
@@ -23,6 +25,8 @@ class Pineapple():
         self.expires_at = -1 # minus one 
 
     def collect(self, bounces, ball_index, sound):
+        """ When powerup gets collected, configure variables and expiry """
+
         self.collected = True
         self.expires_at = bounces + random.randrange(2, 5) #10
 
@@ -36,6 +40,8 @@ class Pineapple():
 
 class Pickle():
     def __init__(self, screen):
+        """ Setup variables, import and scale sprite """
+
         self.screen = screen
 
         self.position = Position(random.randrange(200, 1400), random.randrange(100, 700))
@@ -53,6 +59,8 @@ class Pickle():
         self.collided_ball_index = None
 
     def collect(self, bounces, ball_index, sound):
+        """ When powerup gets collected, configure variables and expiry """
+
         self.collected = True
         self.expires_at = bounces + random.randrange(2, 8)
         self.collided_ball_index = ball_index
@@ -71,6 +79,8 @@ class Pickle():
 
 class Water():
     def __init__(self, screen):
+        """ Setup variables, import and scale sprite """
+
         self.screen = screen
 
         self.position = Position(random.randrange(500, 1100), random.randrange(250, 550))
@@ -90,6 +100,8 @@ class Water():
         self.speed_change = -4
 
     def collect(self, bounces, ball_index, sound):
+        """ When powerup gets collected, configure variables and expiry. Then spawn the water puddle sprite """
+
         self.collected = True
         self.expires_at = bounces + 8
 
@@ -125,6 +137,8 @@ class Water():
 
 class Pringle():
     def __init__(self, screen, powerup_id):
+        """ Setup variables, import and scale sprite """
+
         self.screen = screen
 
         self.powerup_id = powerup_id
@@ -141,10 +155,12 @@ class Pringle():
         self.expires_at = -1
 
     def collect(self, bounces, ball_index, sound):
+        """ When powerup gets collected, configure variables and expiry. Then spawn the pringle wall rectangle """
+
         self.collected = True
         self.expires_at = bounces + 10
 
-        self.col_rect = pygame.Rect(self.position.x + 15, self.position.y + 15, 20, 170) # Need to randomise the spawn position a bit, and change whether it's horizontal or vertical barrier
+        self.col_rect = pygame.Rect(self.position.x + 15, self.position.y + 15, 20, 170)
         
     def render(self):
         if not self.expired:
@@ -153,8 +169,14 @@ class Pringle():
             else:
                 self.screen.blit(self.sprite, self.position.tuple())
 
+# AFTER GAMEPLAY TESTING, WE DECIDED THAT THIS POWERUP WASN'T MUCH FUN
+# IT'S CURRENTLY UNOBTAINABLE WITHIN THE GAME
+# THE ONLY WAY TO ACCESS IT IS MANUALLY CHANGE THE CODE
+# I LEFT ITS CLASS AND LOGIC HERE ANYWAY
 class Computer():
     def __init__(self, screen):
+        """ Setup variables, import and scale sprite """
+
         self.screen = screen
 
         self.position = Position(random.randrange(400, 1200), random.randrange(200, 600))
@@ -169,15 +191,20 @@ class Computer():
         self.expires_at = -1
 
     def collect(self, bounces, ball_index, sound):
+        """ When powerup gets collected, configure variables and expiry """
+
         self.collected = True
         self.expires_at = bounces + 10
 
         sound.computer_pickup() # Sound effect
 
     def render(self):
+        """ Draw appropriate powerup sprite """
+
         if not self.collected:
             self.screen.blit(self.sprite, self.position.tuple())
 
+# THIS POWERUP WAS NEVER COMPLETED
 class Paint():
     def __init__(self, screen):
         self.screen = screen

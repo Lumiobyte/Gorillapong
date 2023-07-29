@@ -14,7 +14,7 @@ class Paddle():
 
         self.speed = 12
         self.speed_mod = 1 # speed modifier
-        self.ai_speed = 12 #4
+        self.ai_speed = 10 #4
         self.ai_paddle = False
 
         self.image = image
@@ -111,9 +111,11 @@ class Paddle():
         """
         
     def get_left_top(self):
+        """ Return the left and top coordinate of the paddle rectangle """
         return (self.paddle_pos.x - self.paddle_rect.x / 2, self.paddle_pos.y - self.paddle_rect.y / 2)
     
     def swap_sprites(self, activation = False):
+        """ Switch between normal and terminator paddle sprite """
         if self.terminator_sprites and activation == False:
             self.sprite = pygame.image.load(f'image/{self.image}.png')
             if self.orientation == 0:
