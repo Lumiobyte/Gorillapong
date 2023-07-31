@@ -48,8 +48,8 @@ def format_timedelta(duration):
 def resource_path(relative_path):
     """ Helper to get filepaths to game assets """
     try:
-        base_path = sys._MEIPASS
+        base_path = sys._MEIPASS # Get the temporary assets folder created by the PyInstaller executable 
     except Exception:
-        base_path = os.path.abspath(".")
+        base_path = os.path.abspath(".") # Not running as compiled, search files normally
 
     return os.path.join(base_path, relative_path)

@@ -28,7 +28,7 @@ class MainMenu():
 
         # goriller sproit
         # poigaim.image.lode()
-        self.gorilla_ball = pygame.image.load('image/gorilla.png')
+        self.gorilla_ball = pygame.image.load(renderutils.resource_path('image/gorilla.png'))
 
         # Load up configured settings so they can be displayed in the settings menu
         data = database.get_music_sound()

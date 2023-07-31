@@ -1,7 +1,9 @@
-from pygame import FULLSCREEN
 import json
+import os 
 
-filepath = "./save.json"
+from pygame import FULLSCREEN
+
+filepath = os.path.abspath("./save.json")
 
 # This dictionary maps number values stored in the database to human-readable text
 gameplay_setting_text_map = {
