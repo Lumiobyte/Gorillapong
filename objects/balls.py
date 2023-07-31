@@ -4,6 +4,7 @@ import random
 import math
 
 from utils.position import Position
+from utils.renderutils import resource_path
 
 class Ball:
     def __init__(self, screen, radius, speed, bounce_modifier, colour, ball_id):
@@ -20,7 +21,7 @@ class Ball:
         self.bounce_modifier = bounce_modifier
         self.colour = colour
 
-        self.sprite = pygame.image.load('image/gorilla.png')
+        self.sprite = pygame.image.load(resource_path('image/gorilla.png'))
 
         self.paddle_last_hit = None
         self.in_puddle = False

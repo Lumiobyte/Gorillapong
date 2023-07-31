@@ -2,6 +2,7 @@ import pygame
 from pygame.locals import *
 
 from utils.position import Position
+from utils.renderutils import resource_path
 
 class Paddle():
     def __init__(self, screen, orientation, starting_pos, image, paddle_id):
@@ -18,7 +19,7 @@ class Paddle():
         self.ai_paddle = False
 
         self.image = image
-        self.sprite = pygame.image.load(f'image/{image}.png')
+        self.sprite = pygame.image.load(resource_path(f'image/{image}.png'))
         self.terminator_sprites = False
 
         if self.orientation == 0:
@@ -117,12 +118,12 @@ class Paddle():
     def swap_sprites(self, activation = False):
         """ Switch between normal and terminator paddle sprite """
         if self.terminator_sprites and activation == False:
-            self.sprite = pygame.image.load(f'image/{self.image}.png')
+            self.sprite = pygame.image.load(resource_path(f'image/{self.image}.png'))
             if self.orientation == 0:
                 self.sprite = pygame.transform.rotate(self.sprite, 90)
             self.terminator_sprites = False
         elif activation == True:
-            self.sprite = pygame.image.load(f'image/{self.image}_terminator.png')
+            self.sprite = pygame.image.load(resource_path(f'image/{self.image}_terminator.png'))
             if self.orientation == 0:
                 self.sprite = pygame.transform.rotate(self.sprite, 90)
             self.terminator_sprites = True
