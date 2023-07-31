@@ -37,10 +37,10 @@ else:
         SCREEN = pygame.display.set_mode(database.get_resolution())
 
 pygame.display.set_caption("Gorilla Pong")
-pygame.display.set_icon(pygame.image.load('image/gorilla.png'))
+pygame.display.set_icon(pygame.image.load(renderutils.resource_path('image/gorilla.png')))
 
-bg_normal = pygame.transform.scale(pygame.image.load('image/bg_dark.png'), (WINDOW.get_width(), WINDOW.get_height()))
-bg_easteregg = pygame.transform.scale(pygame.image.load('image/bg_gorilla.png'), (WINDOW.get_width(), WINDOW.get_height()))
+bg_normal = pygame.transform.scale(pygame.image.load(renderutils.resource_path('image/bg_dark.png')), (WINDOW.get_width(), WINDOW.get_height()))
+bg_easteregg = pygame.transform.scale(pygame.image.load(renderutils.resource_path('image/bg_gorilla.png')), (WINDOW.get_width(), WINDOW.get_height()))
 
 bg_image = bg_normal
 

@@ -1,14 +1,15 @@
 import pygame
 
 from utils import database
+from utils.renderutils import resource_path
 
 class Audio():
     def __init__(self):
         """ Import sounds from files and set their volume according to the configured volume level stored in the database """
-        
+
         pygame.mixer.init(channels = 8)
 
-        self.filepath = "./sound/"
+        self.filepath = resource_path("./sound/")
 
         data = database.get_volume()
         self.music_vol = data[0]

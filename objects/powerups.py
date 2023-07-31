@@ -5,6 +5,7 @@ import random
 
 from utils.colours import Colours
 from utils.position import Position
+from utils.renderutils import resource_path
 
 class Pineapple():
     def __init__(self, screen):
@@ -13,7 +14,7 @@ class Pineapple():
         self.screen = screen
 
         self.position = Position(random.randrange(300, 1300), random.randrange(200, 600))
-        self.sprite = pygame.image.load('image/pineapple.png')
+        self.sprite = pygame.image.load(resource_path('image/pineapple.png'))
         self.sprite = pygame.transform.scale(self.sprite, (self.sprite.get_width() / 6, self.sprite.get_height() / 6))
         self.col_rect = pygame.Rect(*self.position.tuple(), self.sprite.get_width(), self.sprite.get_height())
 
@@ -45,9 +46,9 @@ class Pickle():
         self.screen = screen
 
         self.position = Position(random.randrange(200, 1400), random.randrange(100, 700))
-        self.sprite = pygame.image.load('image/pickle.png')
+        self.sprite = pygame.image.load(resource_path('image/pickle.png'))
         self.sprite = pygame.transform.scale(self.sprite, (self.sprite.get_width() / 10, self.sprite.get_height() / 10))
-        self.jar_sprite = pygame.image.load('image/jar.png')
+        self.jar_sprite = pygame.image.load(resource_path('image/jar.png'))
         self.jar_sprite = pygame.transform.scale(self.jar_sprite, (self.sprite.get_width() / 2.5, self.sprite.get_height() / 2.5))
         self.col_rect = pygame.Rect(*self.position.tuple(), self.sprite.get_width(), self.sprite.get_height())
 
@@ -84,9 +85,9 @@ class Water():
         self.screen = screen
 
         self.position = Position(random.randrange(500, 1100), random.randrange(250, 550))
-        self.sprite = pygame.image.load('image/water.png')
+        self.sprite = pygame.image.load(resource_path('image/water.png'))
         self.sprite = pygame.transform.scale(self.sprite, (self.sprite.get_width() / 10, self.sprite.get_height() / 10))
-        self.puddle_sprite = pygame.image.load('image/puddle.png')
+        self.puddle_sprite = pygame.image.load(resource_path('image/puddle.png'))
         self.puddle_sprite = pygame.transform.scale(self.puddle_sprite, (self.puddle_sprite.get_width() / 3, self.puddle_sprite.get_height() / 3))
 
         self.col_rect = pygame.Rect(*self.position.tuple(), self.sprite.get_width(), self.sprite.get_height())
@@ -144,7 +145,7 @@ class Pringle():
         self.powerup_id = powerup_id
 
         self.position = Position(random.randrange(500, 1100), random.randrange(250, 550))
-        self.sprite = pygame.image.load('image/pringles.png')
+        self.sprite = pygame.image.load(resource_path('image/pringles.png'))
         self.sprite = pygame.transform.scale(self.sprite, (self.sprite.get_width() / 10, self.sprite.get_height() / 10))
 
         self.col_rect = pygame.Rect(*self.position.tuple(), self.sprite.get_width(), self.sprite.get_height())
@@ -180,7 +181,7 @@ class Computer():
         self.screen = screen
 
         self.position = Position(random.randrange(400, 1200), random.randrange(200, 600))
-        self.sprite = pygame.image.load('image/calc.png')
+        self.sprite = pygame.image.load(resource_path('image/calc.png'))
         self.sprite = pygame.transform.scale(self.sprite, (self.sprite.get_width() / 14, self.sprite.get_height() / 14))
 
         self.col_rect = pygame.Rect(*self.position.tuple(), self.sprite.get_width(), self.sprite.get_height())
@@ -210,7 +211,7 @@ class Paint():
         self.screen = screen
         
         self.position = Position(random.randrange(200, 1400), random.randrange(150, 650))
-        self.sprite = pygame.image.load('image/paint.png')
+        self.sprite = pygame.image.load(resource_path('image/paint.png'))
         self.sprite = pygame.transform.scale(self.sprite, (self.sprite.get_width() / 10, self.sprite.get_height() / 10))
 
         self.col_rect = pygame.Rect(*self.position.tuple(), self.sprite.get_width(), self.sprite.get_height())

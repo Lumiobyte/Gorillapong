@@ -501,7 +501,7 @@ class MainMenu():
                 self.sound.button_click() # Sound effect
                 self.tm.click(5000)
                 try:
-                    os.startfile('sound_credits.txt')
+                    os.startfile(renderutils.resource_path('sound_credits.txt'))
                 except:
                     pass
                 return 6

@@ -1,5 +1,7 @@
 import pygame
-import math 
+import math
+import os
+import sys
 
 from utils.position import Position
 from utils.colours import Colours
@@ -42,3 +44,12 @@ def format_timedelta(duration):
     seconds = int(seconds % 60)
 
     return f"{hours}h {minutes}m {seconds}s" if hours > 0 else f"{minutes}m {seconds}s" # Don't show 0 hours 
+
+def resource_path(relative_path):
+    """ Helper to get filepaths to game assets """
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
