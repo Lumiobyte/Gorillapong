@@ -575,7 +575,7 @@ try: # NEVER DO THIS!!!!!!!!
                                 show_stats = database.get_stats_toggle()
                                 game_start_timestamp = datetime.datetime.now()
 
-                    elif pygame.mouse.get_pressed()[0]:
+                    elif pygame.mouse.get_pressed()[0] and active_screen == 1:
                         """ The volume level adjustment menu needs to recognise click-and-drag for its sliders, therefore a separate elif clause and function are used. """
                         screens[active_screen].process_hold(pygame.mouse.get_pos())
 

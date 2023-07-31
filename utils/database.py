@@ -115,7 +115,7 @@ def change_gameplay_setting(setting):
             else:
                 data[setting] = 0
 
-            return_value = str(data[setting])
+            return_value = str(data[setting]) if data[setting] > 0 else "Infinite"
         
         elif setting == "casual_ball_speed" or setting == "comp_ball_speed": # Both have the same options and can therefore be combined
             if data[setting] < 1:

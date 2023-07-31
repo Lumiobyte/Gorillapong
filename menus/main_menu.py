@@ -259,15 +259,19 @@ class MainMenu():
 
                         if action == 999:
                             database.set_resolution((0, 0))
+                            self.tm.gamesettings()
                             force_restart.force_restart("Resolution has been updated to Fullscreen")
                         elif action == 1000:
                             database.set_resolution((1600, 900))
+                            self.tm.gamesettings()
                             force_restart.force_restart("Resolution has been updated to 1600x900")
                         elif action == 1001:
                             database.set_resolution((1280, 720))
+                            self.tm.gamesettings()
                             force_restart.force_restart("Resolution has been updated to 1280x720")
                         elif action == 990:
                             database.set_resolution((1024, 576))
+                            self.tm.gamesettings()
                             force_restart.force_restart("Resolution has been updated to 1024x576")
                         elif action == 1002:
                             value = database.toggle_music_sound("music")

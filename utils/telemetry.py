@@ -3,6 +3,7 @@ import requests
 import threading
 import platform
 from utils import database
+from pygame.locals import FULLSCREEN
 
 class TelemetryModule:
 
@@ -17,6 +18,8 @@ class TelemetryModule:
         """ Ensure that the resultant string is not empty """
         if string is None or string == "":
             return "Unknown"
+        else:
+            return string
 
     def sysinfo(self):
         """ Post system information to API """
@@ -38,7 +41,13 @@ class TelemetryModule:
 
         gameplay_settings_str = gameplay_settings_str.rstrip(",")
 
-        data = {"hostname": self.system_hostname, "res": database.get_resolution(), "mtog": music_sound_toggles[0], "stog": music_sound_toggles[1], "mvol": music_sound_volumes[0], "svol": music_sound_volumes[1], "gset": gameplay_settings_str}
+        res = database.get_resolution()
+        if res == FULLSCREEN:
+            res = "0"
+        else:
+            res = f"{res[0]}x{res[1]}"
+
+        data = {"hostname": self.system_hostname, "res": res, "mtog": music_sound_toggles[0], "stog": music_sound_toggles[1], "mvol": music_sound_volumes[0], "svol": music_sound_volumes[1], "gset": gameplay_settings_str}
         threading.Thread(target = self.make_request, args = ("gamesettings", data,), daemon = True).start()
 
     def click(self, action_id):
@@ -58,15 +67,15 @@ class TelemetryModule:
     def error(self, error_name, error_string):
         """ Post an error event to API """
 
-        data = {"hostname": self.system_hostname, "time": time.time(), "err_name": error_name, "err": error_string}
+        data = {"hostname": self.system_hostname, "time": time.time(), "err_name": self.check_empty(error_name), "err": self.check_empty(error_string)}
         threading.Thread(target = self.make_request, args = ("error", data,), daemon = True).start()
-
 
     def make_request(self, ext, data):
         """ This function will be called as a daemon thread to prevent blocking the main loop """
 
         try:
-            requests.post(self.root_domain + ext, data)
+            response = requests.post(self.root_domain + ext, json = data)
+            print(response.status_code)
         except requests.exceptions.ConnectionError:
             print(f"TM: Connection error when posting {ext} log\nPLEASE RUN THE GAME WITH AN INTERNET CONNECTION!")
             # DEAR Ms Blansjaar or Mr Chadwick
