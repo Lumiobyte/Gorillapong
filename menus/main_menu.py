@@ -3,6 +3,7 @@ from pygame.locals import *
 import sys
 import os
 import datetime
+import webbrowser
 
 from menus import button, force_restart
 from utils import database, renderutils, position
@@ -29,6 +30,9 @@ class MainMenu():
         # goriller sproit
         # poigaim.image.lode()
         self.gorilla_ball = pygame.image.load(renderutils.resource_path('image/gorilla.png'))
+
+        # Semi transparent bar at the bottom of the main menu screen to make texts more readable on the background
+        self.menu_rect = pygame.image.load(renderutils.resource_path("image/menu_rect.png"))
 
         # Load up configured settings so they can be displayed in the settings menu
         data = database.get_music_sound()
@@ -124,7 +128,7 @@ class MainMenu():
             5: "Watch two bots face off in an epic Double Pong 1v1!",
             4: "No friends? No worries! Play against Ed Townsend, our friendly Double Pong AI!",
             3: "Duel your friends in the Double Pong arena!",
-            1: "Contracted malaria? Don't forget to configue your settings!",
+            1: "Contracted malaria? Don't forget to configure your settings!",
             -1: "Sorry to see you go :(",
             6: "See the wonderful people behind the game!",
             8: "Lifetime statistics from all play sessions",
@@ -176,7 +180,12 @@ class MainMenu():
         self.__position_slider_buttons()
         self.__setup_gameplay_setting_buttons()
 
-        self.version = "v1.0"
+
+        if renderutils.check_exe():
+            self.version = "v1.1"
+        else:
+            self.version = "v1.1 src"
+
         self.version_text = self.font.render(self.version, True, Colours.WHITE)
 
         self.slider_texts = [
@@ -400,10 +409,15 @@ class MainMenu():
 
             self.back_button.render()
         else:
+
+            if self.screen_title == "Gorillapong":
+                self.screen.blit(self.menu_rect, (0, 800))
+
             # Background and title
-            self.screen.blit(self.version_text, (20, 850))
+            self.screen.blit(self.version_text, (40, 835))
             text = self.title_font.render(self.screen_title, True, Colours.WHITE)
             self.screen.blit(text, text.get_rect(center = self.__calc_position(0, -350)))
+
 
             # Render all screen buttons and texts
             for btn in self.buttons:
@@ -416,8 +430,11 @@ class MainMenu():
             info_text = self.small_font.render(self.info_texts[self.hovered_button], True, Colours.WHITE)
             self.screen.blit(info_text, info_text.get_rect(center = self.__calc_position(0, 400)))
 
-            if self.screen_title == "Gorillapong" and self.ball_left_top.y < 900:
-                self.screen.blit(self.gorilla_ball, (self.ball_left_top.x, self.ball_left_top.y))
+            if self.screen_title == "Gorillapong":
+                self.screen.blit(self.small_font.render("Have a great day Mr Chadwick!", True, Colours.PLAYER_YELLOW), self.__calc_position(-30, -320))
+
+                if self.ball_left_top.y < 900:
+                    self.screen.blit(self.gorilla_ball, (self.ball_left_top.x, self.ball_left_top.y))
 
             if self.screen_title == "Settings": # Settings screen has some unique UI elements which are drawn here
 
@@ -478,10 +495,12 @@ class MainMenu():
         self.screen.blit(self.font.render("Bray Croke", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(0, 90))
         self.screen.blit(self.small_font.render("ui design", True, Colours.WHITE), self.__calc_position(0, 125))
 
-        self.screen.blit(self.font.render("Freesound Contributors", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(0, 170))
-        self.screen.blit(self.small_font.render("game music and sound effects", True, Colours.WHITE), self.__calc_position(0, 205))
+        self.screen.blit(self.font.render("Internet Contributors", True, Colours.LIGHT_PASTEL_GREEN), self.__calc_position(0, 170))
+        self.screen.blit(self.small_font.render("music, sound effects, images", True, Colours.WHITE), self.__calc_position(0, 205))
         
-        freesound_credits_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(450, 185), 90, 30, "see all", 0, font = self.small_font)
+        freesound_credits_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(405, 185), 90, 30, "see all", 0, font = self.small_font)
+        #view_github_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(150, 290), 300, 50, "view GitHub repository", 0, font = self.small_font)
+        view_github_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-182, -65), 150, 30, "open github", 0, font = self.small_font)
 
         self.screen.blit(self.small_font.render(f"Gorillapong {self.version}", True, Colours.WHITE), self.__calc_position(-257, -115))
 
@@ -501,13 +520,23 @@ class MainMenu():
                 self.sound.button_click() # Sound effect
                 self.tm.click(5000)
                 try:
-                    os.startfile(renderutils.resource_path('sound_credits.txt'))
+                    os.startfile(renderutils.resource_path('internet_credits.txt'))
                 except:
                     pass
+                return 6
+            
+        if view_github_button.check_collision(self.__map_mouse_position(pos))[0]:
+            view_github_button.hover()
+
+            if clicked:
+                self.sound.button_click() # Sound effect
+                self.tm.click(5014)
+                webbrowser.open("https://github.com/Lumiobyte/Gorillapong")
                 return 6
 
         self.credits_back_button.render()
         freesound_credits_button.render()
+        view_github_button.render()
 
         return None
     

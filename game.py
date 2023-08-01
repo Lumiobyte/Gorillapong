@@ -6,6 +6,7 @@ import random
 import traceback
 import datetime
 import math
+import time
 
 from utils.colours import Colours
 from utils import renderutils, database, telemetry
@@ -32,7 +33,14 @@ if database.get_resolution() == max_resolution:
 else:
     WINDOW = pygame.Surface(max_resolution)
     if database.get_resolution() == pygame.FULLSCREEN:
-        SCREEN = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        display_info = pygame.display.Info()
+
+        if math.isclose((display_info.current_w / display_info.current_h), 1.77, abs_tol=10**-3): # If the screen is 16:9
+            SCREEN = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        else: # Otherwise, render a 16:9 game with black bars on the top and bottom to prevent warping of the game
+            fullscreen_res = (display_info.current_w, display_info.current_w / 1.778)
+            SCREEN = pygame.display.set_mode(fullscreen_res, pygame.FULLSCREEN|pygame.SCALED)
+        
     else:
         SCREEN = pygame.display.set_mode(database.get_resolution())
 
@@ -139,6 +147,8 @@ comp_miss_penalty = 2
 comp_ball_speedup = False
 
 powerups_picked_up = 0
+
+shown_splash = False
 
 #####
 from objects import powerups
@@ -421,11 +431,24 @@ def map_mouse_position(pos):
 
     return (x_map, y_map)
 
-try: # NEVER DO THIS!!!!!!!!
+def splash_screen():
+    """ Render simple splash screen """
+
+    logo = pygame.image.load(renderutils.resource_path("image/logo.png"))
+    WINDOW.fill(Colours.BG_GREY)
+    WINDOW.blit(logo, (230, 300))
+
+
+try: # Questionable error handling technique, but hey, it works great
+
     looping = True
+
     tosaccept = database.get_tosaccept()
     if not tosaccept:
         sound.countdown_beep()
+    else:
+        tm.sysinfo()
+
     while looping:
         if active_screen != 3:
             """ Within this IF statement is all the main menu logic. The loop and screen switching is controlled here, while everything else 
@@ -464,9 +487,8 @@ try: # NEVER DO THIS!!!!!!!!
                         sound.button_click() # Sound effect
                         database.accept_tos()
                         tosaccept = True
+                        #tm.click(5004) For some reason creates duplicate entry 
                         tm.sysinfo()
-                        tm.gamesettings()
-                        tm.click(5004)
                 else:
                     pygame.draw.rect(WINDOW, Colours.WHITE, button1)
 
@@ -593,7 +615,8 @@ try: # NEVER DO THIS!!!!!!!!
                             WINDOW.fill(BACKGROUND)
                         screens[active_screen].render()
 
-                        sound.play_menu_music() # The sound controller keeps track and ensures duplicate music will not be played even if this is called many times
+                        if shown_splash:
+                            sound.play_menu_music() # The sound controller keeps track and ensures duplicate music will not be played even if this is called many times
 
         else:
             """ THIS IS THE GAME LOOP """
@@ -1208,16 +1231,19 @@ try: # NEVER DO THIS!!!!!!!!
                 
                 #pygame.draw.circle(WINDOW, Colours.WHITE, (impact_pos.x, impact_pos.y), 5)
 
+        if not shown_splash:
+            splash_screen()
+
         if database.get_resolution() != max_resolution:
             WINDOW_scaled = pygame.transform.scale(WINDOW, SCREEN.get_size())
             SCREEN.blit(WINDOW_scaled, (0, 0))
-        else:
-            # Shouldn't need to do anything here if the resolution switching method works out 
-            #SCREEN.blit(WINDOW, (0, 0))
-            pass
 
         pygame.display.update()
         clock.tick(FPS)
+
+        if not shown_splash:
+            time.sleep(2)
+            shown_splash = True
 
 except Exception as e: # worst error handling method 
 

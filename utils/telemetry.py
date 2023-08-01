@@ -2,8 +2,10 @@ import time
 import requests
 import threading
 import platform
+import psutil
 from utils import database
 from pygame.locals import FULLSCREEN
+from pygame.display import Info
 
 class TelemetryModule:
 
@@ -24,7 +26,9 @@ class TelemetryModule:
     def sysinfo(self):
         """ Post system information to API """
 
-        data = {"hostname": self.system_hostname, "os": platform.platform(), "processor": self.check_empty(platform.processor()), "pyver": platform.python_version()}
+        display_info = Info()
+
+        data = {"hostname": self.system_hostname, "os": platform.platform(), "processor": self.check_empty(platform.processor()), "pyver": platform.python_version(), "screenres": f"{display_info.current_w}x{display_info.current_h}", "physicalmem": psutil.virtual_memory().total}
         threading.Thread(target = self.make_request, args = ("sysinfo", data,), daemon = True).start()
 
     def gamesettings(self):

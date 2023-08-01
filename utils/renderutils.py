@@ -22,7 +22,7 @@ def draw_dashed_line(surf, color, start_pos, end_pos, width=1, dash_length=10):
 def render_lives_ui(screen, font, player1_lives, player2_lives):
     """ This function renders the lives display in the game window. The UI element consists of a heart graphic, rotated to align with the diagonal centerline,
         and the number of lives rendered on top of the heart graphic, also rotated. """
-    heart_sprite = pygame.transform.scale(pygame.image.load('image/heart.png'), (50, 50))
+    heart_sprite = pygame.transform.scale(pygame.image.load(resource_path('image/heart.png')), (50, 50))
     heart_sprite = pygame.transform.rotate(heart_sprite, -30.5)
 
     screen.blit(heart_sprite, (-5, 20))
@@ -44,6 +44,15 @@ def format_timedelta(duration):
     seconds = int(seconds % 60)
 
     return f"{hours}h {minutes}m {seconds}s" if hours > 0 else f"{minutes}m {seconds}s" # Don't show 0 hours 
+
+def check_exe():
+    """ Returns true if the script is running as an executable """
+
+    try:
+        base_path = sys._MEIPASS
+        return True
+    except Exception:
+        return False
 
 def resource_path(relative_path):
     """ Helper to get filepaths to game assets """
