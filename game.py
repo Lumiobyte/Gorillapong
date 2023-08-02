@@ -266,7 +266,7 @@ def clear_powerups(clear_all):
     for obj in delete_queue:
         spawned_powerups.remove(obj)
 
-    if clear_all:
+    if clear_all: # Clear effects of powerups on the ball if requested
         active_balls[0].speed = active_balls[0].default_speed
         active_balls[0].in_puddle = False
         active_balls[0].pringle_last_hit = None
@@ -393,6 +393,8 @@ def perfect_ai(player):
         The method used here means it is effectively impossible for the designated player to miss. """ 
 
     divisor = random.randint(20, 25) / 10 # Add some flavor to corner shots by hitting different parts of the paddle (21, 25)
+
+    # Determine whether AI aims to make the ball hit left corner, middle, or right corner of the paddle
     if aim_randomiser == 0:
         impact_x = player.paddle_horizontal.paddle_pos.x - player.paddle_horizontal.paddle_rect.x / divisor
         impact_y = player.paddle_vertical.paddle_pos.y - player.paddle_vertical.paddle_rect.y / divisor
@@ -419,8 +421,6 @@ def map_mouse_position(pos):
         Due to the way the alternate resolution settings are implemeneted, without this mouse mapping, buttons would be
         difficult or impossible to press and the visual position of the cursor on the screen would be different to where the game thinks it is. """
 
-    #output_start + ((output_end - output_start) / (input_end - input_start)) * (input - input_start)
-
     if SCREEN:
         res = SCREEN.get_size()
     else:
@@ -445,6 +445,7 @@ try: # Questionable error handling technique, but hey, it works great
 
     tosaccept = database.get_tosaccept()
     if not tosaccept:
+        shown_splash = True
         sound.countdown_beep()
     else:
         tm.sysinfo()
@@ -487,6 +488,7 @@ try: # Questionable error handling technique, but hey, it works great
                         sound.button_click() # Sound effect
                         database.accept_tos()
                         tosaccept = True
+                        shown_splash = False
                         #tm.click(5004) For some reason creates duplicate entry 
                         tm.sysinfo()
                 else:
@@ -557,6 +559,7 @@ try: # Questionable error handling technique, but hey, it works great
                             player2.lives = 3
                             spawned_powerups = []
 
+                            # Configure variables specific to the selected gamemode 
                             ai = ai_toggle
                             if ai:
                                 mode = 1 # Player vs AI mode
@@ -615,7 +618,7 @@ try: # Questionable error handling technique, but hey, it works great
                             WINDOW.fill(BACKGROUND)
                         screens[active_screen].render()
 
-                        if shown_splash:
+                        if shown_splash: # No music until splash screen has finished 
                             sound.play_menu_music() # The sound controller keeps track and ensures duplicate music will not be played even if this is called many times
 
         else:
@@ -719,7 +722,7 @@ try: # Questionable error handling technique, but hey, it works great
                 WINDOW.blit(font.render("Main Menu", True, Colours.BLACK), (button1.left + 50, button1.top + 33))
                 WINDOW.blit(font.render("Resume Game", True, Colours.BLACK), (button2.left + 35, button2.top + 33))
                 WINDOW.blit(font.render("Reset Ball", True, Colours.BLACK), (button3.left + 55, button3.top + 33))
-                if mode != 3 and powerups_enabled:
+                if mode != 3 and powerups_enabled: # Only show button to clear powerups if they're enabled and can spawn in the current gamemode 
                     WINDOW.blit(font.render("Clear Powerups", True, Colours.BLACK), (button4.left + 22, button4.top + 33))
 
                 pygame.draw.rect(WINDOW, Colours.BG_GREY, pygame.Rect(0, 870, 176, 30)) # Cover up the old FPS text so that the new one can be rendered without it overlapping
@@ -854,6 +857,7 @@ try: # Questionable error handling technique, but hey, it works great
 
                 keys = pygame.key.get_pressed()
 
+                # Holding shift/ralt: slows paddle movement
                 if keys[K_LSHIFT]:
                     p1_shift = True
                 else:
@@ -864,6 +868,7 @@ try: # Questionable error handling technique, but hey, it works great
                 else:
                     p2_shift = False
 
+                # Paddle movement
                 if player1_ai or temp_ai_player == player1:
                     pass # Do nothing
                 else:
@@ -896,7 +901,7 @@ try: # Questionable error handling technique, but hey, it works great
                 scoring_player = None
                 for i, ball in enumerate(active_balls):
 
-                    if ai and not temp_ai_player == player2: # Ed Townsend
+                    if ai and not temp_ai_player == player2: # 
 
                         if repredict:
                             impact_pos = ball.future_position(None)
@@ -909,8 +914,7 @@ try: # Questionable error handling technique, but hey, it works great
                                 impact_pos.y = player2.paddle_vertical.paddle_pos.y
                             
 
-                            """ This can be described using the 💀 emoji
-                                The divisor determines the margin of error for the AI's aim.
+                            """ The divisor determines the margin of error for the AI's aim.
                                 A larger number, in short, gives it a higher chance of missing a corner shot.
                                 Therefore, create a larger divisor more often based on the ai difficulty configured in settings
                                 It's worth noting that HARD mode effectively cannot miss, besides a few specific scenarios. 
@@ -967,7 +971,8 @@ try: # Questionable error handling technique, but hey, it works great
                     #ball.position.x = pygame.mouse.get_pos()[0]
                     #ball.position.y = pygame.mouse.get_pos()[1]
 
-                    if ball.position.x < -100 or ball.position.y > 1000:
+                    # Ball out of bounds checks
+                    if ball.position.x < -100 or ball.position.y > 1000: # Went out on yellow player's sides
                         out_of_bounds = True
                         if mode == 3 and player_last_hit == None:
                             sound.lose_life()
@@ -978,7 +983,7 @@ try: # Questionable error handling technique, but hey, it works great
 
                         scoring_player = player2
 
-                    elif ball.position.x > 1700 or ball.position.y < -100:
+                    elif ball.position.x > 1700 or ball.position.y < -100: # Went out on green player's sides 
                         out_of_bounds = True
                         if mode == 3 and player_last_hit == None:
                             sound.lose_life()
@@ -994,6 +999,7 @@ try: # Questionable error handling technique, but hey, it works great
 
                     paddle_collisions = [False, False, False, False]
 
+                    # Check for collisions between ball and paddles
                     if ball.position.x < (200 + ball.radius):
                         paddle_collisions[0] = collision(*player1.paddle_vertical.get_left_top(), *player1.paddle_vertical.paddle_rect.tuple(), *ball.position.tuple(), ball.radius)
                     if ball.position.x > (1400 - ball.radius):
@@ -1005,38 +1011,29 @@ try: # Questionable error handling technique, but hey, it works great
 
                     paddle_hit = None
 
-                    if paddle_collisions[0]:
-                        ball.reverse_velocity_x(player1.paddle_vertical.paddle_pos, player1.paddle_vertical.paddle_id)
-                        sound.bounce() # Sound effect
-                        player_last_hit = player1
+                    # Action those paddle collisions 
+                    if True in paddle_collisions:
                         bounces += 1
-                        paddle_hit = player1.paddle_vertical
+                        sound.bounce() # Sound effect
                         ball.pringle_last_hit = None
                         repredict = True
-                    elif paddle_collisions[1]:
-                        ball.reverse_velocity_y(player2.paddle_horizontal.paddle_pos, player2.paddle_horizontal.paddle_id)
-                        sound.bounce() # Sound effect
-                        player_last_hit = player2
-                        bounces += 1
-                        paddle_hit = player2.paddle_horizontal
-                        ball.pringle_last_hit = None
-                        repredict = True
-                    elif paddle_collisions[2]:
-                        ball.reverse_velocity_x(player2.paddle_vertical.paddle_pos, player2.paddle_vertical.paddle_id)
-                        sound.bounce() # Sound effect
-                        player_last_hit = player2
-                        bounces += 1
-                        paddle_hit = player2.paddle_vertical
-                        ball.pringle_last_hit = None
-                        repredict = True
-                    elif paddle_collisions[3]:
-                        ball.reverse_velocity_y(player1.paddle_horizontal.paddle_pos, player1.paddle_horizontal.paddle_id)
-                        sound.bounce() # Sound effect
-                        player_last_hit = player1
-                        bounces += 1
-                        paddle_hit = player1.paddle_horizontal
-                        ball.pringle_last_hit = None
-                        repredict = True
+
+                        if paddle_collisions[0]: # Actions dependent on which paddle was hit 
+                            ball.reverse_velocity_x(player1.paddle_vertical.paddle_pos, player1.paddle_vertical.paddle_id)
+                            player_last_hit = player1
+                            paddle_hit = player1.paddle_vertical
+                        elif paddle_collisions[1]:
+                            ball.reverse_velocity_y(player2.paddle_horizontal.paddle_pos, player2.paddle_horizontal.paddle_id)
+                            player_last_hit = player2
+                            paddle_hit = player2.paddle_horizontal
+                        elif paddle_collisions[2]:
+                            ball.reverse_velocity_x(player2.paddle_vertical.paddle_pos, player2.paddle_vertical.paddle_id)
+                            player_last_hit = player2
+                            paddle_hit = player2.paddle_vertical
+                        elif paddle_collisions[3]:
+                            ball.reverse_velocity_y(player1.paddle_horizontal.paddle_pos, player1.paddle_horizontal.paddle_id)
+                            player_last_hit = player1
+                            paddle_hit = player1.paddle_horizontal
 
                     if temp_ai_player != None and paddle_hit:
                         aim_randomiser = random.randint(0, 2)
@@ -1046,18 +1043,18 @@ try: # Questionable error handling technique, but hey, it works great
                                 # It may be necessary to ensure that one of the human's paddles has been hit before allowing AI to make this choice again
                                 aim_randomiser = random.randint(0, 2)
 
-                        if player1_ai:
+                        if player1_ai: # Allows yellow AI to reroll aim randomiser in AI vs AI mode 
                             if paddle_hit == player1.paddle_vertical or paddle_hit == player1.paddle_horizontal:
                                 aim_randomiser = random.randint(0, 2)
 
 
                     #### Powerup collisions
-                    for powerup in spawned_powerups:
-                        if collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *ball.position.tuple(), ball.radius):
-                            if powerup.collected:
-                                if type(powerup) == powerups.Water and powerup.effected and not powerup.expired:
-                                    if not powerup.is_in_puddle(ball.ball_id) and not ball.in_puddle:
-                                        if not ball.bounced:
+                    for powerup in spawned_powerups: # For every powerup on the field...
+                        if collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *ball.position.tuple(), ball.radius): # If ball collided with this powerup
+                            if powerup.collected: # If the powerup has already been collected
+                                if type(powerup) == powerups.Water and powerup.effected and not powerup.expired: # If it's Water, its effects have been applied and it hasn't expired
+                                    if not powerup.is_in_puddle(ball.ball_id) and not ball.in_puddle: # If the ball is not in puddle according to either this powerup object, or the ball itself
+                                        if not ball.bounced: # If the ball just respawned and hasn't hit any paddle yet, we need to apply less speed reduction
                                             ball.speed = 1
                                             ball.bounced = True
                                             powerup.enter_puddle(ball.ball_id) 
@@ -1065,55 +1062,49 @@ try: # Questionable error handling technique, but hey, it works great
                                             ball.speed = ball.speed + powerup.enter_puddle(ball.ball_id)
                                         ball.in_puddle = True
                                         sound.water_enter() # Sound effect
-                                    else:
+                                    else: # Otherwise, check if the ball is leaving the puddle
                                         next_position = ball.future_position(1)
-                                        if not collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *next_position, ball.radius) and ball.in_puddle:
-                                            ball.speed = ball.speed + powerup.exit_puddle(ball.ball_id)
+                                        if not collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *next_position, ball.radius) and ball.in_puddle: # If ball is in puddle and its position next frame would be out of puddle
+                                            ball.speed = ball.speed + powerup.exit_puddle(ball.ball_id) # Remove speed reduction
                                             ball.in_puddle = False
                                             sound.water_exit() # Sound effect
-                                if type(powerup) == powerups.Pringle and powerup.effected and not powerup.expired:
-                                    if collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *ball.position.tuple(), ball.radius):
-                                        if ball.pringle_last_hit != powerup.powerup_id:
-                                            ball.reverse_velocity_x()
+                                if type(powerup) == powerups.Pringle and powerup.effected and not powerup.expired: # If the powerup is a pringle, effects are applied, not expired
+                                    if collision(*powerup.position.tuple(), powerup.col_rect.width, powerup.col_rect.height, *ball.position.tuple(), ball.radius): # If the ball is in collision with the pringle's rectangle
+                                        if ball.pringle_last_hit != powerup.powerup_id: # If the ball wasn't colliding with this pringle last frame
+                                            ball.reverse_velocity_x() # Bounce off it horizontally
                                             sound.hit_pringle() # Sound effect
-                                            repredict = True
-                                            ball.pringle_last_hit = powerup.powerup_id
-                            elif type(powerup) == powerups.Computer:
+                                            repredict = True # AI is allowed to repredict next frame
+                                            ball.pringle_last_hit = powerup.powerup_id # Set the most recently collided with pringle to this one (prevents double bouncing)
+                            elif type(powerup) == powerups.Computer: # If not and it's a computer, collect it after this specific check
                                 if player_last_hit != None:
                                     powerup.collect(bounces, i, sound)
                                     powerups_picked_up += 1
-                            else:
+                            else: # If not and it's any other powerup, collect it 
                                 powerup.collect(bounces, i, sound)
                                 powerups_picked_up += 1
 
                 #### Powerup processing
                 delete_queue = []
-                for index, powerup in enumerate(spawned_powerups):
+                for index, powerup in enumerate(spawned_powerups): # This for loop applies powerup effects and expires them when appropriate 
 
                     if powerup.collected and not powerup.expired:
                         if not powerup.effected:
                             if type(powerup) == powerups.Pineapple:
-                                #print("yellow")
                                 for ball in active_balls:
                                     ball.speed = ball.speed + powerup.speed_increase
                                     sound.pineapple_pickup() # Sound effect
                             elif type(powerup) == powerups.Pickle:
-                                    powerup.update_pos(active_balls[i].position)
-
-                                    """
-                                    if player_last_hit: # prevent crashes when nobody has hit before the powerup was collected
-                                        player_last_hit.lives -= 1 # since powerups are not working as intended, just take off a life for hitting a pickle at all
-                                    """
+                                    powerup.update_pos(active_balls[i].position) # Make the pickle jar sprite follow the ball position while this powerup is active
                             elif type(powerup) == powerups.Computer:
                                 temp_ai_player = player_last_hit
                                 player_last_hit.paddle_horizontal.swap_sprites(True)
                                 player_last_hit.paddle_vertical.swap_sprites(True)
 
-                            powerup.effected = True
+                            powerup.effected = True # Set the flag indicating the powerup effect has been applied 
                         else:
-                            if powerup.expires_at > 0 and powerup.expires_at <= bounces:
+                            if powerup.expires_at > 0 and powerup.expires_at <= bounces: # If the powerup is ready to expire based on its bounce counter
                                 #print(f"{powerup} is ready to expire.")
-                                if type(powerup) == powerups.Pineapple:
+                                if type(powerup) == powerups.Pineapple: 
                                     for ball in active_balls:
                                         ball.speed = ball.speed - powerup.speed_increase
                                         sound.pineapple_expire() # Sound effect
@@ -1126,12 +1117,10 @@ try: # Questionable error handling technique, but hey, it works great
                                     temp_ai_player = None    
 
                                 powerup.expired = True
-                                # don't use this way 
-                                #delete_queue.append(powerup)
 
                             else:
                                 if type(powerup) == powerups.Pickle:
-                                    powerup.update_pos(active_balls[i].position)
+                                    powerup.update_pos(active_balls[i].position) # Make sure pickle keeps following ball position
 
                     # Crashes randomly
                     """
@@ -1140,7 +1129,7 @@ try: # Questionable error handling technique, but hey, it works great
                     """
 
                 #### Powerup spawning
-                if mode != 3 and powerups_enabled:
+                if mode != 3 and powerups_enabled: # If powerups enabled and not comp mode
                     if bounces >= next_powerup_bounces:
                         spawned_powerups.append(get_new_powerup())
                         next_powerup_bounces += random.randrange(*next_powerup_bounces_range) #(4, 11) # (6, 15) (9, 21)
@@ -1151,19 +1140,20 @@ try: # Questionable error handling technique, but hey, it works great
                     if mode == 3:
                         reset_paddles()
 
-                    if player_last_hit:
+                    if player_last_hit: # If the ball was hit before it went out, give the appropriate player a point
                         scoring_player.score += 1
                         scoring_player.total_score += 1
                         player_last_hit = None
                         sound.score_point() # Sound effect
 
-                        if comp_ball_speedup and mode == 3:
-                            comp_ball_speed += 0.005
-                    else:
+                        if comp_ball_speedup and mode == 3 and comp_ball_speed < 9:
+                            comp_ball_speed += 0.01
+                    else: # Otherwise it was just missed, so increment this counter
                         serves_missed += 1
 
 
-                if mode == 3:
+                ### Win checks
+                if mode == 3: # Set appropriate winning player based on relevent score goal depending on gamemode 
                     if player1.score >= win_threshold:
                         game_won = True
                         game_winner = player1
@@ -1178,7 +1168,7 @@ try: # Questionable error handling technique, but hey, it works great
                         game_won = True
                         game_winner = player2
 
-                if game_won:
+                if game_won: # Calculate duration, send log, play sound effects
                     game_duration = datetime.datetime.now() - game_start_timestamp
                     game_duration_string = renderutils.format_timedelta(game_duration)
 
@@ -1191,7 +1181,7 @@ try: # Questionable error handling technique, but hey, it works great
 
                 WINDOW.fill(BACKGROUND)
 
-                renderutils.draw_dashed_line(WINDOW, Colours.LIGHT_GREY, (0, 0), (1600, 900), 5, 20)
+                renderutils.draw_dashed_line(WINDOW, Colours.LIGHT_GREY, (0, 0), (1600, 900), 5, 20) # The centerline
 
                 score_text_1 = pygame.transform.rotate(score_font.render(str(player1.score), True, Colours.SCORE_GREY), -29)
                 score_text_2 = pygame.transform.rotate(score_font.render(str(player2.score), True, Colours.SCORE_GREY), -32)
@@ -1210,7 +1200,7 @@ try: # Questionable error handling technique, but hey, it works great
 
                 render_queue = []
 
-                if show_stats:
+                if show_stats: # Renders stats for nerds
                     WINDOW.blit(font.render("FPS: {} / {}".format(round(clock.get_fps(), 1), time_delta), True, Colours.GREY), (5, 875))
                     WINDOW.blit(font.render(f"V: ({round(active_balls[0].velocity.x, 5)}, {round(active_balls[0].velocity.y, 5)})", True, Colours.GREY), (180, 875))
                     WINDOW.blit(font.render(str(bounces), True, Colours.GREY), (550, 875))
@@ -1234,7 +1224,7 @@ try: # Questionable error handling technique, but hey, it works great
         if not shown_splash:
             splash_screen()
 
-        if database.get_resolution() != max_resolution:
+        if database.get_resolution() != max_resolution: # Blit the 1600x900 render surface onto the larger/smaller display surface if the non-default resolution is chosen
             WINDOW_scaled = pygame.transform.scale(WINDOW, SCREEN.get_size())
             SCREEN.blit(WINDOW_scaled, (0, 0))
 
@@ -1245,10 +1235,10 @@ try: # Questionable error handling technique, but hey, it works great
             time.sleep(2)
             shown_splash = True
 
-except Exception as e: # worst error handling method 
+except Exception as e: # Catch any and all exceptions :P
 
     print(traceback.print_exc())
-    tm.error(str(e), traceback.print_exc())
+    tm.error(str(e), traceback.print_exc()) # Causes 400 serverside half the time, maybe tracebacks are too long or have invalid chars?
 
     while True:
         for event in pygame.event.get():
@@ -1261,7 +1251,7 @@ except Exception as e: # worst error handling method
                 sys.exit()
 
         pygame.draw.rect(WINDOW, Colours.BLACK, pygame.Rect(550, 250, 500, 400))
-        WINDOW.blit(font.render("FATAL ERROR", True, Colours.PLAYER_RED), (600, 300))
+        WINDOW.blit(font.render("FATAL ERROR", True, Colours.PLAYER_RED), (600, 300)) # :(
         WINDOW.blit(font.render(str(e), True, Colours.WHITE), (600, 350))
         WINDOW.blit(font.render("Press escape to exit the game", True, Colours.GREY), (600, 500))
 

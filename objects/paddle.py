@@ -22,7 +22,7 @@ class Paddle():
         self.sprite = pygame.image.load(resource_path(f'image/{image}.png'))
         self.terminator_sprites = False
 
-        if self.orientation == 0:
+        if self.orientation == 0: # Rotate sprite if necessary and position the paddle
             self.sprite = pygame.transform.rotate(self.sprite, 90)
             self.paddle_rect = Position(190, 20)
             self.paddle_pos = Position(*starting_pos)
@@ -37,17 +37,17 @@ class Paddle():
         else:
             temp_mod = 1
 
-        if self.orientation == 0:
-            if distance:
+        if self.orientation == 0: # If this paddle is horizontal
+            if distance: # If a specific distance has been requested, use that 
                 self.paddle_pos.x += distance
-            elif self.ai_paddle:
+            elif self.ai_paddle: # AI paddle have different movement speed
                 self.paddle_pos.x += self.ai_speed * self.speed_mod * temp_mod
             else:
                 self.paddle_pos.x += self.speed * self.speed_mod * temp_mod
-        else:
-            if distance:
+        else: # If this paddle is vertical
+            if distance: 
                 self.paddle_pos.y -= distance
-            elif self.ai_paddle:
+            elif self.ai_paddle: 
                 self.paddle_pos.y -= self.ai_speed * self.speed_mod * temp_mod
             else:
                 self.paddle_pos.y -= self.speed * self.speed_mod * temp_mod
@@ -55,20 +55,21 @@ class Paddle():
         self.limit_pos()
 
     def move_negative(self, shift = False, distance = None):
+        """ Move the paddle in the negative coordinate direction """
 
         if shift:
-            temp_mod = 0.5 # Holding shift causes paddles to move slower
+            temp_mod = 0.3 # Holding shift causes paddles to move slower
         else:
             temp_mod = 1
 
-        if self.orientation == 0:
+        if self.orientation == 0: # If this paddle is horizontal
             if distance:
                 self.paddle_pos.x -= distance
             elif self.ai_paddle:
                 self.paddle_pos.x -= self.ai_speed * self.speed_mod * temp_mod
             else:
                 self.paddle_pos.x -= self.speed * self.speed_mod * temp_mod
-        else:
+        else: # If this paddle is vertical
             if distance:
                 self.paddle_pos.y += distance
             elif self.ai_paddle:
@@ -79,6 +80,7 @@ class Paddle():
         self.limit_pos()
 
     def move_to(self, pos):
+        """ Set the paddle position """
         if self.orientation == 0:
             self.paddle_pos.x = pos
         else:
@@ -87,6 +89,7 @@ class Paddle():
         self.limit_pos()
 
     def limit_pos(self):
+        """ Prevent the paddle's position from going outside of its allowed range """
         if self.orientation == 0:
             if self.paddle_pos.x > 1500:
                 self.paddle_pos.x = 1500
@@ -113,10 +116,12 @@ class Paddle():
         
     def get_left_top(self):
         """ Return the left and top coordinate of the paddle rectangle """
+
         return (self.paddle_pos.x - self.paddle_rect.x / 2, self.paddle_pos.y - self.paddle_rect.y / 2)
     
     def swap_sprites(self, activation = False):
         """ Switch between normal and terminator paddle sprite """
+
         if self.terminator_sprites and activation == False:
             self.sprite = pygame.image.load(resource_path(f'image/{self.image}.png'))
             if self.orientation == 0:

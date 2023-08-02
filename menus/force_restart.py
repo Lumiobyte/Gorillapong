@@ -9,6 +9,7 @@ from utils.colours import Colours
 from utils.renderutils import check_exe
 
 def force_restart(note):
+    """ This is used to restart the game after a resolution change. It will attempt to do so once automatically, but otherwise, notifies the user. """
 
     restart_attempted = False
 

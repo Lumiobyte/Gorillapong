@@ -183,11 +183,11 @@ def get_all_gameplay_settings(titles = True):
         values = []
         for setting in gameplay_setting_text_map:
             if titles:
-                if gameplay_setting_text_map[setting] is None:
+                if gameplay_setting_text_map[setting] is None: # If this is supposed to be displayed as the raw number e.g. score goals
                     val = str(data[setting])
                     values.append(val if val != "0" else "Infinite") # When the target score is 0, there is no win condition, so show "infinite" on the button
                 else:
-                    values.append(gameplay_setting_text_map[setting][data[setting]])
+                    values.append(gameplay_setting_text_map[setting][data[setting]]) # Append the text description of what the setting is currently. e.g. 1 converted to ON, etc..
             else:
                 values.append(data[setting])
 

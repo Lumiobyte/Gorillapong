@@ -4,6 +4,7 @@ import sys
 import os
 import datetime
 import webbrowser
+import random
 
 from menus import button, force_restart
 from utils import database, renderutils, position
@@ -33,6 +34,26 @@ class MainMenu():
 
         # Semi transparent bar at the bottom of the main menu screen to make texts more readable on the background
         self.menu_rect = pygame.image.load(renderutils.resource_path("image/menu_rect.png"))
+
+        self.logo = pygame.image.load(renderutils.resource_path("image/logo.png"))
+        self.logo_scaled = pygame.transform.scale(self.logo, (self.logo.get_width() / 2.5, self.logo.get_height() / 2.5))
+
+        self.splashes = [
+            "Have you booked your yearly colonoscopy?",
+            "Incompatible with structure charts!",
+            "Contents: 4x banana, 1x gorilla",
+            "...watching your every move",
+            "It's Not What You Think!",
+            "[Decrypting passwords... sending in plaintext over HTTP...]",
+            "Double Pong: The ball is got gorilla",
+            "Your Public IP Address is 206.195.29.181",
+            "Have a great day Mr Chadwick!",
+            "Sincerely, Management",
+            "Thanks for playing Mr Chadwick!",
+            "I think this game is worth full marks ;)"
+        ]
+
+        self.splash = random.choice(self.splashes)
 
         # Load up configured settings so they can be displayed in the settings menu
         data = database.get_music_sound()
@@ -135,7 +156,7 @@ class MainMenu():
             990: "Change resolution to 1024x576",
             1000: "Change resolution to 1600x900",
             1001: "Change resolution to 1280x720",
-            999: "Use Fullscreen mode (BETA)",
+            999: "Use Fullscreen mode (potentially reduced performance)",
             1002: "Toggle music",
             1003: "Toggle sound",
             1004: "Adjust volume levels",
@@ -242,7 +263,7 @@ class MainMenu():
 
             self.hovered_button = 0
 
-            if clicked and self.ball_clicked is False and self.ball_trigger_rect.collidepoint(pos): # Check for click on the ball for easter egg
+            if clicked and self.ball_clicked is False and self.ball_trigger_rect.collidepoint(self.__map_mouse_position(pos)): # Check for click on the ball for easter egg
                 self.ball_clicked = True
                 self.tm.click(5013)
                 self.sound.bounce()
@@ -431,7 +452,9 @@ class MainMenu():
             self.screen.blit(info_text, info_text.get_rect(center = self.__calc_position(0, 400)))
 
             if self.screen_title == "Gorillapong":
-                self.screen.blit(self.small_font.render("Have a great day Mr Chadwick!", True, Colours.PLAYER_YELLOW), self.__calc_position(-30, -320))
+
+                splash_text = self.small_font.render(self.splash, True, Colours.PLAYER_YELLOW)
+                self.screen.blit(splash_text, splash_text.get_rect(center = self.__calc_position(0, -300)))
 
                 if self.ball_left_top.y < 900:
                     self.screen.blit(self.gorilla_ball, (self.ball_left_top.x, self.ball_left_top.y))
@@ -503,6 +526,9 @@ class MainMenu():
         view_github_button = button.Button(self.screen, Colours.WHITE, Colours.LIGHT_PASTEL_GREEN, self.__calc_position(-182, -65), 150, 30, "open github", 0, font = self.small_font)
 
         self.screen.blit(self.small_font.render(f"Gorillapong {self.version}", True, Colours.WHITE), self.__calc_position(-257, -115))
+
+        self.screen.blit(self.logo_scaled, (10, 760))
+        self.screen.blit(self.small_font.render(f"Cockatoo Development Studios 2023", True, Colours.SCORE_GREY), (48, 860))
 
         # Button processing
         if self.credits_back_button.check_collision(self.__map_mouse_position(pos))[0]:

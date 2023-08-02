@@ -18,7 +18,7 @@ class Pineapple():
         self.sprite = pygame.transform.scale(self.sprite, (self.sprite.get_width() / 6, self.sprite.get_height() / 6))
         self.col_rect = pygame.Rect(*self.position.tuple(), self.sprite.get_width(), self.sprite.get_height())
 
-        self.speed_increase = 2 # 2
+        self.speed_increase = 2.5 # 2
 
         self.collected = False # has been picked up by player
         self.effected = False # its effect has been applied to the player? 
@@ -29,15 +29,11 @@ class Pineapple():
         """ When powerup gets collected, configure variables and expiry """
 
         self.collected = True
-        self.expires_at = bounces + random.randrange(2, 5) #10
+        self.expires_at = bounces + random.randrange(3, 5) #10
 
     def render(self):
         if not self.collected:
-            #pygame.draw.rect(self.screen, Colours.WHITE, self.col_rect) # collision box
-
             self.screen.blit(self.sprite, self.position.tuple())
-
-            #pygame.draw.circle(self.screen, Colours.WHITE, self.position.tuple(), 5) # top left
 
 class Pickle():
     def __init__(self, screen):
@@ -113,16 +109,19 @@ class Water():
         sound.water_pickup() # Sound effect
 
     def enter_puddle(self, ball_id):
+        """ Add a ball to the list of balls currently inside this puddle and return the amount of speed it should lose """
         self.balls_in_puddle.append(ball_id)
         return self.speed_change
         
     def is_in_puddle(self, ball_id):
+        """ Check if a ball is currently listed as being inside this pudle """
         if ball_id in self.balls_in_puddle:
             return True
         else:
             return False
         
     def exit_puddle(self, ball_id):
+        """ Remove ball from being inside this puddle and return the amount of speed it should gain """
         if ball_id in self.balls_in_puddle:
             self.balls_in_puddle.remove(ball_id)
             return -self.speed_change

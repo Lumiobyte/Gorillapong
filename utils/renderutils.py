@@ -12,12 +12,12 @@ def draw_dashed_line(surf, color, start_pos, end_pos, width=1, dash_length=10):
     target = Position(*end_pos)
     displacement = target - origin
     length = len(displacement)
-    slope = displacement/length
+    slope = displacement / length
 
-    for index in range(0, int(length/dash_length), 2):
-        start = origin + (slope *    index    * dash_length) # whore 
+    for index in range(0, int(length / dash_length), 2): # Iterate over requested length drawing short lines
+        start = origin + (slope * index * dash_length) 
         end   = origin + (slope * (index + 1) * dash_length)
-        pygame.draw.aaline(surf, color, start.tuple(), end.tuple(), width) # change it to non-aa line to have wdith back
+        pygame.draw.aaline(surf, color, start.tuple(), end.tuple(), width) # change it to non-aa line to have width back
 
 def render_lives_ui(screen, font, player1_lives, player2_lives):
     """ This function renders the lives display in the game window. The UI element consists of a heart graphic, rotated to align with the diagonal centerline,
